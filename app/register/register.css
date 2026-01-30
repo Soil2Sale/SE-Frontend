@@ -1,0 +1,639 @@
+/* ===== Register Page - Modern Farm Theme ===== */
+.register-page {
+    display: flex;
+    min-height: 100vh;
+    background: #f8faf8;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ===== Left Side - Branding ===== */
+.register-branding {
+    flex: 1;
+    background: linear-gradient(180deg, #1a3a1a 0%, #2d5a27 50%, #1e4620 100%);
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    transform: translateX(-100%);
+    opacity: 0;
+    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.register-branding.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.branding-content {
+    position: relative;
+    z-index: 2;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+/* Brand Logo */
+.brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+
+.brand-logo svg {
+    width: 40px;
+    height: 40px;
+    color: #a8e063;
+}
+
+.brand-logo span {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #a8e063;
+    letter-spacing: 2px;
+}
+
+/* Branding Text */
+.branding-text h1 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 1rem 0;
+    line-height: 1.2;
+}
+
+.branding-text p {
+    font-size: 1.05rem;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Stats */
+.branding-stats {
+    display: flex;
+    gap: 2rem;
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #a8e063;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Farm Illustration */
+.branding-illustration {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+}
+
+.farm-scene {
+    position: relative;
+    height: 120px;
+    display: flex;
+    align-items: flex-end;
+}
+
+.tractor {
+    position: absolute;
+    left: 10%;
+    bottom: 10px;
+    animation: tractorMove 8s linear infinite;
+}
+
+.tractor-body {
+    width: 50px;
+    height: 25px;
+    background: linear-gradient(180deg, #4a8c3f 0%, #2d5a27 100%);
+    border-radius: 5px 10px 5px 5px;
+    position: relative;
+}
+
+.tractor-body::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: #3d7a33;
+    border-radius: 3px;
+    top: -18px;
+    right: 5px;
+    border: 2px solid #2d5a27;
+}
+
+.wheel {
+    position: absolute;
+    background: #333;
+    border-radius: 50%;
+    border: 3px solid #555;
+    animation: wheelSpin 0.5s linear infinite;
+}
+
+.wheel-front {
+    width: 15px;
+    height: 15px;
+    bottom: -10px;
+    left: 3px;
+}
+
+.wheel-back {
+    width: 22px;
+    height: 22px;
+    bottom: -13px;
+    right: 3px;
+}
+
+@keyframes tractorMove {
+    0% {
+        transform: translateX(0);
+    }
+
+    50% {
+        transform: translateX(150px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+@keyframes wheelSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.field {
+    display: flex;
+    gap: 12px;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 60%;
+}
+
+.plant {
+    width: 15px;
+    height: 40px;
+    background: linear-gradient(180deg, #a8e063 0%, #7cb342 100%);
+    border-radius: 8px 8px 0 0;
+    animation: plantSway 2s ease-in-out infinite;
+}
+
+.plant-1 {
+    height: 35px;
+    animation-delay: 0s;
+}
+
+.plant-2 {
+    height: 45px;
+    animation-delay: 0.1s;
+}
+
+.plant-3 {
+    height: 40px;
+    animation-delay: 0.2s;
+}
+
+.plant-4 {
+    height: 50px;
+    animation-delay: 0.15s;
+}
+
+.plant-5 {
+    height: 38px;
+    animation-delay: 0.25s;
+}
+
+.plant-6 {
+    height: 48px;
+    animation-delay: 0.05s;
+}
+
+.plant-7 {
+    height: 42px;
+    animation-delay: 0.3s;
+}
+
+.plant-8 {
+    height: 36px;
+    animation-delay: 0.2s;
+}
+
+.plant-9 {
+    height: 52px;
+    animation-delay: 0.1s;
+}
+
+.plant-10 {
+    height: 44px;
+    animation-delay: 0.25s;
+}
+
+@keyframes plantSway {
+
+    0%,
+    100% {
+        transform: rotate(-2deg);
+    }
+
+    50% {
+        transform: rotate(2deg);
+    }
+}
+
+/* ===== Right Side - Form ===== */
+.register-form-container {
+    flex: 1.2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: white;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: 0.1s;
+    overflow-y: auto;
+}
+
+.register-form-container.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.form-wrapper {
+    width: 100%;
+    max-width: 520px;
+}
+
+/* Form Header */
+.form-header {
+    margin-bottom: 1.5rem;
+}
+
+.form-header h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1a3a1a;
+    margin: 0 0 0.5rem 0;
+}
+
+.form-header p {
+    font-size: 0.95rem;
+    color: #6b7b6b;
+    margin: 0;
+}
+
+/* Success State */
+.success-state {
+    text-align: center;
+    padding: 3rem 2rem;
+}
+
+.success-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    animation: successBounce 0.6s ease;
+}
+
+.success-icon svg {
+    width: 40px;
+    height: 40px;
+    color: #16a34a;
+}
+
+@keyframes successBounce {
+    0% {
+        transform: scale(0);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.success-state h2 {
+    font-size: 1.5rem;
+    color: #1a3a1a;
+    margin: 0 0 0.5rem 0;
+}
+
+.success-state p {
+    color: #6b7b6b;
+    margin: 0;
+}
+
+.redirect-text {
+    display: block;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: #9ca3af;
+}
+
+/* Error Alert */
+.error-alert {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    color: #dc2626;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    animation: shake 0.5s ease-in-out;
+}
+
+.error-alert svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    20%,
+    60% {
+        transform: translateX(-5px);
+    }
+
+    40%,
+    80% {
+        transform: translateX(5px);
+    }
+}
+
+/* Form Styles */
+.register-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.form-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #1a3a1a;
+}
+
+.input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 0.875rem;
+    width: 18px;
+    height: 18px;
+    color: #9ca3af;
+    pointer-events: none;
+    transition: color 0.2s;
+}
+
+.input-container input,
+.input-container select {
+    width: 100%;
+    padding: 0.75rem 0.875rem 0.75rem 2.5rem;
+    font-size: 0.9rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    background: #f9fafb;
+    color: #1a3a1a;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.input-container select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+}
+
+.input-container input::placeholder {
+    color: #9ca3af;
+}
+
+.input-container input:focus,
+.input-container select:focus {
+    border-color: #2d5a27;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.1);
+}
+
+.input-container:focus-within .input-icon {
+    color: #2d5a27;
+}
+
+/* Password Strength */
+.password-strength {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.375rem;
+}
+
+.strength-bars {
+    display: flex;
+    gap: 4px;
+    flex: 1;
+}
+
+.strength-bar {
+    height: 4px;
+    flex: 1;
+    background: #e5e7eb;
+    border-radius: 2px;
+    transition: background 0.2s;
+}
+
+.password-strength span {
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+/* Submit Button */
+.submit-btn {
+    width: 100%;
+    padding: 0.875rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #2d5a27 0%, #4a8c3f 100%);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(45, 90, 39, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    margin-top: 0.5rem;
+}
+
+.submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(45, 90, 39, 0.4);
+}
+
+.submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.btn-loader {
+    width: 22px;
+    height: 22px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Form Footer */
+.form-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.form-footer p {
+    margin: 0;
+    color: #6b7b6b;
+    font-size: 0.875rem;
+}
+
+.form-footer a {
+    color: #2d5a27;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.form-footer a:hover {
+    color: #1e3d1a;
+    text-decoration: underline;
+}
+
+/* ===== Responsive Design ===== */
+@media (max-width: 1024px) {
+    .register-page {
+        flex-direction: column;
+    }
+
+    .register-branding {
+        padding: 2rem;
+        min-height: auto;
+    }
+
+    .branding-text h1 {
+        font-size: 1.75rem;
+    }
+
+    .branding-stats {
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+    }
+
+    .branding-illustration {
+        display: none;
+    }
+
+    .register-form-container {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .register-branding {
+        padding: 1.5rem;
+    }
+
+    .branding-text h1 {
+        font-size: 1.5rem;
+    }
+
+    .branding-stats {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .stat {
+        flex: 1;
+        min-width: 80px;
+    }
+
+    .register-form-container {
+        padding: 1rem;
+    }
+
+    .form-header h2 {
+        font-size: 1.5rem;
+    }
+}
