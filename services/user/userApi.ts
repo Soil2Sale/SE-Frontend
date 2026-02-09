@@ -4,6 +4,7 @@ import type {
   UpdateProfileRequest,
   UpdateProfileResponse,
   DeleteAccountResponse,
+  GetUserByRoleResponse,
 } from "../../types/user.types";
 
 export const getProfile = async (): Promise<GetProfileResponse> => {
@@ -24,5 +25,14 @@ export const updateProfile = async (
 export const deleteAccount = async (): Promise<DeleteAccountResponse> => {
   const response =
     await apiClient.delete<DeleteAccountResponse>("/user/account");
+  return response.data;
+};
+
+export const getUserByRole = async (
+  role: string
+): Promise<GetUserByRoleResponse> => {
+  const response = await apiClient.get<GetUserByRoleResponse>(
+    `/users/role?role=${role}`
+  );
   return response.data;
 };
