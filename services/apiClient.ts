@@ -64,7 +64,7 @@ const clearTokens = (): void => {
 const redirectToLogin = (): void => {
   if (typeof window !== "undefined") {
     clearTokens();
-    window.location.href = "/login";
+    window.location.href = "/auth/login";
   }
 };
 
