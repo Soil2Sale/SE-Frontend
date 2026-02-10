@@ -16,19 +16,19 @@ export default function CreditRating() {
   };
 
   return (
-    <div className="bg-white border-4 border-gray-300 p-8 rounded-3xl h-full flex flex-col justify-between">
+    <div className="bg-white border-4 border-[#4CAF50] p-3 rounded-2xl h-full flex flex-col justify-between shadow-md">
       <div>
-        <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Credit Rating</p>
-        <div className={`w-20 h-20 rounded-full ${ratingColors[rating.rating]} flex items-center justify-center mb-4`}>
-          <span className="text-3xl font-black">{rating.rating}</span>
+        <p className="text-xs font-black uppercase tracking-widest text-[#1B5E20] mb-1.5">Credit Rating</p>
+        <div className={`w-14 h-14 rounded-full ${ratingColors[rating.rating]} flex items-center justify-center mb-2`}>
+          <span className="text-xl font-black">{rating.rating}</span>
         </div>
-        <p className="text-sm opacity-70 mb-4">Recovery Score: <span className="font-bold">{rating.score}%</span></p>
+        <p className="text-xs text-[#558B2F] mb-2">Recovery: <span className="font-bold text-[#2E7D32]">{rating.score}%</span></p>
       </div>
-      <div className="space-y-2 text-xs">
+      <div className="space-y-0.5 text-xs">
         {rating.factors.map((factor, i) => (
-          <div key={i} className="flex items-center gap-2 text-gray-600">
-            <CheckCircle size={14} className="text-green-500" />
-            <span>{factor}</span>
+          <div key={i} className="flex items-center gap-1.5 text-[#558B2F]">
+            <CheckCircle size={10} className="text-[#4CAF50]" />
+            <span className="text-xs">{factor}</span>
           </div>
         ))}
       </div>

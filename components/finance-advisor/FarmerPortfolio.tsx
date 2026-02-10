@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React from 'react';
 import { ALL_INDIA_REGIONS } from './partnership-services';
 
 type Farmer = {
@@ -19,100 +19,26 @@ const DUMMY_FARMERS: Farmer[] = [
 ];
 
 export default function FarmerPortfolio() {
-  const [hoveredState, setHoveredState] = useState<string | null>(null);
-
-  // aggregate per state
-  const stateAgg = ALL_INDIA_REGIONS.reduce<Record<string, { farmers: number; totalLoan: number; pending: number }>>((acc, r) => {
-    acc[r.state] = { farmers: 0, totalLoan: 0, pending: 0 };
-    return acc;
-  }, {});
-
-  DUMMY_FARMERS.forEach(f => {
-    const region = ALL_INDIA_REGIONS.find(r => r.id === f.regionId);
-    if (!region) return;
-    const agg = stateAgg[region.state] || { farmers: 0, totalLoan: 0, pending: 0 };
-    agg.farmers += 1;
-    agg.totalLoan += f.loanAmount;
-    agg.pending += f.pendingAmount;
-    stateAgg[region.state] = agg;
-  });
-
-  const states = Object.keys(stateAgg);
-
   return (
-    <div className="mt-8 grid grid-cols-12 gap-8">
-      <div className="col-span-8 bg-white p-8 rounded-3xl border-4 border-gray-200">
-        <h4 className="text-sm font-black text-gray-500 uppercase mb-4">Farmer Portfolio (sample)</h4>
-        <div className="flex gap-6">
-          <div className="flex-1">
-            <ul className="space-y-3 max-h-64 overflow-y-auto">
-              {DUMMY_FARMERS.map(f => {
-                const region = ALL_INDIA_REGIONS.find(r => r.id === f.regionId)!;
-                return (
-                  <li key={f.id} className="p-3 rounded-xl border border-gray-100 flex justify-between items-center">
-                    <div>
-                      <div className="font-bold">{f.name}</div>
-                      <div className="text-xs opacity-60">{region.name} • {region.state}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold">₹{(f.loanAmount).toLocaleString()}</div>
-                      <div className="text-xs opacity-60">Pending ₹{(f.pendingAmount).toLocaleString()}</div>
-                      <div className={`text-xs mt-1 ${f.status === 'Default' ? 'text-red-600' : f.status === 'Active' ? 'text-amber-600' : 'text-green-600'}`}>{f.status}</div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-
-          {/* small state heatmap (list) */}
-          <div className="w-80">
-            <h5 className="text-xs font-bold mb-3">State heatmap (hover)</h5>
-            <div className="grid grid-cols-1 gap-2">
-              {states.map((s) => {
-                const agg = stateAgg[s];
-                return (
-                  <div
-                    key={s}
-                    onMouseEnter={() => setHoveredState(s)}
-                    onMouseLeave={() => setHoveredState(null)}
-                    className="p-3 rounded-lg border cursor-pointer hover:shadow-md flex justify-between items-center"
-                  >
-                    <div className="text-sm font-bold">{s}</div>
-                    <div className="text-xs opacity-70">{agg.farmers} farmers</div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="mt-4 p-3 rounded-xl bg-gray-50">
-              {hoveredState ? (
-                (() => {
-                  const a = stateAgg[hoveredState];
-                  return (
-                    <div className="text-sm">
-                      <div className="font-bold">{hoveredState}</div>
-                      <div className="text-xs">Farmers: {a.farmers}</div>
-                      <div className="text-xs">Total loan: ₹{(a.totalLoan).toLocaleString()}</div>
-                      <div className="text-xs">Pending: ₹{(a.pending).toLocaleString()}</div>
-                    </div>
-                  );
-                })()
-              ) : (
-                <div className="text-xs opacity-60">Hover a state to see aggregated farmer loan data.</div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* right column: empty placeholder used earlier for Cost vs Profit, keep reserved */}
-      <div className="col-span-4 flex items-start">
-        <div className="w-full bg-white border-4 border-gray-200 rounded-3xl p-6">
-          <h5 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Portfolio Details</h5>
-          <p className="text-sm opacity-70">Use this panel for quick filters, export, or quick actions on loans.</p>
-        </div>
-      </div>
+    <div className="bg-white p-2 rounded-2xl border-4 border-[#4CAF50] shadow-md h-full flex flex-col">
+      <h4 className="text-xs font-black text-[#1B5E20] uppercase mb-1 border-b-2 border-[#4CAF50] pb-0.5 flex-shrink-0">Farmer Portfolio</h4>
+      <ul className="space-y-0.5 overflow-y-auto flex-1">
+        {DUMMY_FARMERS.map(f => {
+          const region = ALL_INDIA_REGIONS.find(r => r.id === f.regionId)!;
+          return (
+            <li key={f.id} className="p-1 rounded-lg border-l-4 border-[#4CAF50] bg-gradient-to-r from-[#F1F8E9] to-white flex justify-between items-center text-xs hover:shadow-sm transition-shadow">
+              <div className="flex-1">
+                <div className="font-bold text-[#1B5E20] text-xs">{f.name}</div>
+                <div className="text-xs text-[#558B2F]">{region.state}</div>
+              </div>
+              <div className="text-right text-xs">
+                <div className="font-bold text-[#2E7D32]">₹{(f.loanAmount / 1000).toFixed(0)}K</div>
+                <div className={`text-xs font-semibold ${f.status === 'Default' ? 'text-red-600' : f.status === 'Active' ? 'text-[#F57F17]' : 'text-[#2E7D32]'}`}>{f.status}</div>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

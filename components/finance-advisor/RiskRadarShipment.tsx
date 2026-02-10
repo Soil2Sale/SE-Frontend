@@ -42,25 +42,25 @@ export default function RiskRadarShipment() {
   };
 
   return (
-    <div className="bg-white border-4 border-gray-300 p-10 rounded-3xl relative overflow-hidden">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-2xl font-black italic flex items-center gap-3">
-          <MapPin size={24} className="text-red-500" />
+    <div className="bg-white border-4 border-[#4CAF50] p-2.5 rounded-2xl relative overflow-hidden shadow-md flex flex-col h-full">
+      <div className="flex justify-between items-center mb-1.5 flex-shrink-0">
+        <h3 className="text-sm font-black italic flex items-center gap-1.5 text-[#1B5E20]">
+          <MapPin size={16} className="text-[#D32F2F]" />
           National Risk Radar - India Heatmap
         </h3>
-        <div className="flex gap-3 text-xs font-bold">
-          <span className="bg-red-500 text-white px-3 py-1 rounded-lg uppercase">High Risk</span>
-          <span className="bg-yellow-500 text-white px-3 py-1 rounded-lg uppercase">Medium</span>
-          <span className="bg-green-500 text-white px-3 py-1 rounded-lg uppercase">Low Risk</span>
+        <div className="flex gap-1.5 text-xs font-bold">
+          <span className="bg-[#D32F2F] text-white px-1.5 py-0.5 rounded-lg uppercase text-xs">High Risk</span>
+          <span className="bg-[#F57F17] text-white px-1.5 py-0.5 rounded-lg uppercase text-xs">Medium</span>
+          <span className="bg-[#4CAF50] text-white px-1.5 py-0.5 rounded-lg uppercase text-xs">Low Risk</span>
         </div>
       </div>
 
-      <div className="relative bg-gradient-to-br from-blue-50 to-emerald-50 h-[500px] rounded-3xl border-2 border-gray-200 overflow-visible">
+      <div className="relative bg-gradient-to-br from-[#E8F5E9] to-[#E0F2F1] flex-1 min-h-0 rounded-2xl border-2 border-[#4CAF50] overflow-hidden flex flex-col">
         {/* India Map SVG */}
         <svg
           viewBox="0 0 100 100"
           className="w-full h-full"
-          style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }}
+          style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))' }}
         >
           {/* India Outline with simplified state polygons */}
           
@@ -230,41 +230,41 @@ export default function RiskRadarShipment() {
 
         {/* Hover Tooltip */}
         {hoveredRegion && (
-          <div className="absolute top-4 right-4 w-80 bg-[#143023] text-white p-5 rounded-2xl shadow-2xl z-50 border-2 border-green-400">
-            <h5 className="font-black italic text-lg mb-3">{hoveredRegion.name}, {hoveredRegion.state}</h5>
-            <div className="text-xs space-y-2">
-              <div className="flex justify-between border-b border-white/20 pb-1">
-                <span className="opacity-70">Yield Health</span>
-                <span className="font-bold">{hoveredRegion.yieldHealth}%</span>
+          <div className="absolute top-2 right-2 w-60 bg-gradient-to-br from-[#E8F5E9] to-white text-[#1B5E20] p-2.5 rounded-lg shadow-lg z-50 border-2 border-[#4CAF50]">
+            <h5 className="font-black italic text-sm mb-1.5">{hoveredRegion.name}, {hoveredRegion.state}</h5>
+            <div className="text-xs space-y-1">
+              <div className="flex justify-between border-b border-[#4CAF50]/20 pb-0.5">
+                <span className="text-[#558B2F]">Yield Health</span>
+                <span className="font-bold text-[#2E7D32]">{hoveredRegion.yieldHealth}%</span>
               </div>
-              <div className="flex justify-between border-b border-white/20 pb-1">
-                <span className="opacity-70">Risk Level</span>
-                <span className="font-bold text-yellow-400">{hoveredRegion.riskLevel}</span>
+              <div className="flex justify-between border-b border-[#4CAF50]/20 pb-0.5">
+                <span className="text-[#558B2F]">Risk Level</span>
+                <span className="font-bold text-[#F57F17]">{hoveredRegion.riskLevel}</span>
               </div>
-              <div className="flex justify-between border-b border-white/20 pb-1">
-                <span className="opacity-70">Farmers Seeking Loans</span>
-                <span className="font-bold">{hoveredRegion.farmersSeekingLoan.toLocaleString()}</span>
+              <div className="flex justify-between border-b border-[#4CAF50]/20 pb-0.5">
+                <span className="text-[#558B2F]">Farmers Seeking Loans</span>
+                <span className="font-bold text-[#2E7D32]">{hoveredRegion.farmersSeekingLoan.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between border-b border-white/20 pb-1">
-                <span className="opacity-70">Avg Loan Amount</span>
-                <span className="font-bold">{hoveredRegion.avgLoanAmount}</span>
+              <div className="flex justify-between border-b border-[#4CAF50]/20 pb-0.5">
+                <span className="text-[#558B2F]">Avg Loan Amount</span>
+                <span className="font-bold text-[#2E7D32]">{hoveredRegion.avgLoanAmount}</span>
               </div>
-              <div className="flex justify-between border-b border-white/20 pb-1">
-                <span className="opacity-70">Default Rate</span>
-                <span className="font-bold text-red-400">{hoveredRegion.loanDefaultRate}%</span>
+              <div className="flex justify-between border-b border-[#4CAF50]/20 pb-0.5">
+                <span className="text-[#558B2F]">Default Rate</span>
+                <span className="font-bold text-red-600">{hoveredRegion.loanDefaultRate}%</span>
               </div>
             </div>
 
-            <div className="mt-4 bg-green-500/20 p-3 rounded-xl border border-green-400/30">
+            <div className="mt-1.5 bg-[#4CAF50]/10 p-1.5 rounded-lg border border-[#4CAF50]/50">
               <div className="flex items-center justify-between">
-                <div className="text-sm opacity-80">Suggested Interest Rate</div>
-                <div className="text-2xl font-black text-green-400">{suggestInterest(hoveredRegion)}%</div>
+                <div className="text-xs text-[#558B2F] font-bold">Suggested Rate</div>
+                <div className="text-lg font-black text-[#2E7D32]">{suggestInterest(hoveredRegion)}%</div>
               </div>
             </div>
 
             {hoveredRegion.activePestAlert && (
-              <div className="mt-3 bg-red-500/20 text-red-200 p-2 rounded-xl text-center font-black text-xs uppercase border border-red-400/30 flex items-center justify-center gap-2">
-                <AlertTriangle size={14} /> Active pest alert: {hoveredRegion.pestType}
+              <div className="mt-1 bg-red-500/10 text-red-700 p-1.5 rounded-lg text-center font-black text-xs uppercase border border-red-400/30 flex items-center justify-center gap-1">
+                <AlertTriangle size={10} /> Active pest: {hoveredRegion.pestType}
               </div>
             )}
           </div>
