@@ -1,8 +1,8 @@
-export default function DashboardPage() {
-  return (
-    <div className="p-8">
-      <h1 className="text-4xl font-bold text-white mb-4">Dashboard</h1>
-      <p className="text-gray-400">Welcome to your dashboard</p>
-    </div>
-  );
+import { h1 } from "motion/react-client";
+import { redirect } from "next/navigation";
+
+export default function Page() {
+    return(
+        <h1>Dashboard</h1>
+    );
 }
