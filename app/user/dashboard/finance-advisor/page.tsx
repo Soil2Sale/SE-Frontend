@@ -3,9 +3,5 @@ import React from 'react';
 import { FinancePartnerDashboard } from '../../../../components/finance-advisor';
 
 export default function Page() {
-  return (
-    <main>
-      <FinancePartnerDashboard />
-    </main>
-  );
+  return <FinancePartnerDashboard />;
 }

@@ -1,43 +1,22 @@
 'use client';
 import React from 'react';
-import Link from 'next/link';
-import { Landmark, TrendingUp, Users, ShieldAlert, LogOut, Zap } from 'lucide-react';
-import { NavItem, SchemeCard } from './PartnerHelpers';
+import { Zap } from 'lucide-react';
+import { SchemeCard } from './PartnerHelpers';
 import CreditRating from './CreditRating';
 import RiskRadarShipment from './RiskRadarShipment';
 import CostVsProfitAnalysis from './CostVsProfitAnalysis';
+import FarmerPortfolio from './FarmerPortfolio';
 import { GOV_SCHEMES, getPortfolioSummary } from './partnership-services';
 
 export default function FinancePartnerDashboard() {
   const portfolio = getPortfolioSummary();
 
   return (
-    <div className="flex min-h-screen bg-[#F5F7F5]">
-      {/* Sidebar */}
-      <aside className="w-72 bg-[#143023] text-white flex flex-col p-8 fixed h-screen shadow-2xl z-50 overflow-y-auto">
-        <div className="flex items-center gap-3 mb-16 px-2">
-          <div className="bg-[#4CAF50] p-1.5 rounded-lg shadow-inner">
-            <Landmark size={24} />
-          </div>
-          <h1 className="text-2xl font-black tracking-tighter italic uppercase">Finance Hub</h1>
-        </div>
-
-        <nav className="flex-grow space-y-4">
-          <NavItem icon={<TrendingUp size={20} />} label="Risk Radar" active />
-          <NavItem icon={<Users size={20} />} label="Farmer Portfolio" href="/user/dashboard/farmer-portfolio" />
-         
-        </nav>
-
-        <button className="flex items-center gap-4 text-white/50 hover:text-white mt-auto pt-6 border-t border-white/10">
-          <LogOut size={20} />
-          <span className="text-sm font-bold uppercase tracking-widest">Exit Portal</span>
-        </button>
-      </aside>
-
+    <div className="w-full min-h-screen bg-[#F5F7F5]">
       {/* Main Content Area */}
-      <main className="flex-1 ml-72 p-10">
-        <header className="flex justify-between items-center mb-10">
-          <h2 className="text-2xl font-black text-[#143023] italic">Partner Decision Support</h2>
+      <main className="w-full p-12">
+        <header className="flex justify-between items-center mb-12">
+          <h2 className="text-4xl font-black text-[#143023] italic">Farmer Portfolio - India Heat Map</h2>
           <div className="bg-white px-6 py-2 rounded-full shadow-sm flex items-center gap-3">
             <div className="w-8 h-8 bg-[#4CAF50] rounded-full text-white flex items-center justify-center font-bold">P</div>
             <span className="text-xs font-bold text-gray-600">Institutional Partner (ID: 992)</span>
@@ -71,10 +50,10 @@ export default function FinancePartnerDashboard() {
         </div>
 
         {/* Portfolio Summary & Government Schemes Row */}
-        <div className="grid grid-cols-12 gap-8 mb-8">
+        <div className="grid grid-cols-12 gap-8 mb-12">
           {/* Portfolio Summary */}
           <div className="col-span-8 bg-white p-10 rounded-3xl border-4 border-gray-300 shadow-sm">
-            <h3 className="text-xl font-black italic mb-6 text-[#143023]">Portfolio Summary</h3>
+            <h3 className="text-xl font-black italic mb-6 text-[#143023]">Active Farmer Loans</h3>
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Total Lent</p>
@@ -117,6 +96,11 @@ export default function FinancePartnerDashboard() {
               />
             ))}
           </div>
+        </div>
+
+        {/* Farmer Portfolio Details */}
+        <div className="mt-16">
+          <FarmerPortfolio />
         </div>
       </main>
     </div>

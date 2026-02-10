@@ -17,7 +17,7 @@ export default function UserLayout({
     const accessToken = localStorage.getItem("accessToken");
 
     if (!accessToken) {
-      router.push("/");
+      //router.push("/");
     } else {
       setIsAuthenticated(true);
     }
@@ -32,9 +32,9 @@ export default function UserLayout({
     );
   }
 
-  if (!isAuthenticated) {
+  /*if (!isAuthenticated) {
     return null;
-  }
+  }*/
 
   return (
     <div className="flex min-h-screen bg-[#060010]">
