@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Smartphone,
@@ -11,15 +12,91 @@ import {
 } from "lucide-react";
 import LanguageSelector from "@/components/ui/LanguageSelector";
 import { translations, Language } from "@/app/constants/translations";
+import { register, verifyRegistration } from "@/services/auth/authApi";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [lang, setLang] = useState<Language>("en");
   const t = translations[lang];
-  const [step, setStep] = useState(1); // Step 1: Details, Step 2: OTP
+  const [step, setStep] = useState(1);
+  
+  const [formData, setFormData] = useState({
+    name: "",
+    mobile_number: "",
+    recovery_email: "",
+    role: "farmer",
+  });
+  
+  const [userId, setUserId] = useState("");
+  const [telegramBotLink, setTelegramBotLink] = useState("");
+  const [otp, setOtp] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const handleNext = () => {
-    // Add validation here if needed
-    setStep(2);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+    setError("");
+  };
+
+  const handleRegister = async () => {
+    setError("");
+    setLoading(true);
+
+    if (!formData.name || !formData.mobile_number) {
+      setError("Name and phone number are required");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await register({
+        name: formData.name,
+        mobile_number: formData.mobile_number,
+        role: formData.role,
+        recovery_email: formData.recovery_email || undefined,
+      });
+
+      setUserId(response.data.user.id);
+      setTelegramBotLink(response.data.telegram_bot_link);
+      setSuccessMessage(response.message);
+      setStep(2);
+    } catch (err: any) {
+      setError(err.message || "Registration failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    setError("");
+    setLoading(true);
+
+    if (!otp || otp.length !== 6) {
+      setError("Please enter a valid 6-digit OTP");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await verifyRegistration({
+        userId,
+        otp,
+      });
+
+      setSuccessMessage(response.message);
+      
+      setTimeout(() => {
+        router.push("/auth/login");
+      }, 1500);
+    } catch (err: any) {
+      setError(err.message || "OTP verification failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,7 +130,7 @@ export default function RegisterPage() {
         >
           <ArrowLeft className="h-6 w-6 text-[#1B5E20]" />
         </Link>
-        <div className="w-full max-w-[420px] space-y-8">
+        <div className="w-full max-w-105 space-y-8">
           <div className="text-center lg:text-left space-y-3">
             <h2 className="text-4xl font-bold tracking-tight text-[#1B5E20] dark:text-[#A5D6A7]">
               {t.createAccount}
@@ -62,6 +139,18 @@ export default function RegisterPage() {
               {t.verifySubtitle}
             </p>
           </div>
+
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 px-4 py-3 rounded-2xl text-sm">
+              {error}
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 px-4 py-3 rounded-2xl text-sm">
+              {successMessage}
+            </div>
+          )}
 
           <div className="space-y-6 bg-[#E8F5E9] dark:bg-[#111] p-8 rounded-3xl shadow-xl shadow-[#1B5E20]/5 border border-[#A5D6A7]/30 dark:border-[#333]">
             {step === 1 ? (
@@ -81,8 +170,11 @@ export default function RegisterPage() {
                       id="name"
                       name="name"
                       type="text"
+                      value={formData.name}
+                      onChange={handleInputChange}
                       className="flex h-12 w-full rounded-2xl border border-[#A5D6A7] dark:border-[#333] bg-[#FAFAFA] dark:bg-[#1a1a1a] pl-11 pr-4 py-3 text-sm placeholder:text-[#263238]/40 focus:outline-none focus:ring-2 focus:ring-[#2E7D32] dark:focus:ring-[#A5D6A7] focus:border-transparent transition-all duration-300 hover:border-[#1B5E20]"
                       placeholder={t.namePlaceholder}
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -99,10 +191,13 @@ export default function RegisterPage() {
                     <Smartphone className="absolute left-4 top-3.5 h-5 w-5 text-[#263238]/40 group-focus-within:text-[#1B5E20] transition-colors duration-300" />
                     <input
                       id="phone"
-                      name="phone"
+                      name="mobile_number"
                       type="tel"
+                      value={formData.mobile_number}
+                      onChange={handleInputChange}
                       className="flex h-12 w-full rounded-2xl border border-[#A5D6A7] dark:border-[#333] bg-[#FAFAFA] dark:bg-[#1a1a1a] pl-11 pr-4 py-3 text-sm placeholder:text-[#263238]/40 focus:outline-none focus:ring-2 focus:ring-[#2E7D32] dark:focus:ring-[#A5D6A7] focus:border-transparent transition-all duration-300 hover:border-[#1B5E20]"
                       placeholder="+91 98765 43210"
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -119,21 +214,48 @@ export default function RegisterPage() {
                     <User className="absolute left-4 top-3.5 h-5 w-5 text-[#263238]/40 group-focus-within:text-[#1B5E20] transition-colors duration-300" />
                     <input
                       id="email"
-                      name="email"
+                      name="recovery_email"
                       type="email"
+                      value={formData.recovery_email}
+                      onChange={handleInputChange}
                       className="flex h-12 w-full rounded-2xl border border-[#A5D6A7] dark:border-[#333] bg-[#FAFAFA] dark:bg-[#1a1a1a] pl-11 pr-4 py-3 text-sm placeholder:text-[#263238]/40 focus:outline-none focus:ring-2 focus:ring-[#2E7D32] dark:focus:ring-[#A5D6A7] focus:border-transparent transition-all duration-300 hover:border-[#1B5E20]"
                       placeholder="john@example.com"
+                      disabled={loading}
                     />
+                  </div>
+                </div>
+                <div>
+                  <label 
+                    htmlFor="role"
+                    className="text-sm font-bold leading-none text-[#1B5E20] dark:text-[#E8F5E9] ml-1"
+                  >{t.roleLabel}</label>
+                  <div className="relative group">
+                    <User className="absolute left-4 top-3.5 h-5 w-5 text-[#263238]/40 group-focus-within:text-[#1B5E20] transition-colors duration-300" />
+                    <select
+                      id="role"
+                      name="role"
+                      value={formData.role}
+                      onChange={handleInputChange}
+                      className="flex h-12 w-full rounded-2xl border border-[#A5D6A7] dark:border-[#333] bg-[#FAFAFA] dark:bg-[#1a1a1a] pl-11 pr-4 py-3 text-sm placeholder:text-[#263238]/40 focus:outline-none focus:ring-2 focus:ring-[#2E7D32] dark:focus:ring-[#A5D6A7] focus:border-transparent transition-all duration-300 hover:border-[#1B5E20]"
+                      disabled={loading}
+                    >
+                      <option value="Farmer">{t.roleValueFarmer}</option>
+                      <option value="Buyer">{t.roleValueBuyer}</option>
+                      <option value="Cooperative">{t.roleValueCooperative}</option>
+                      <option value="Finance Partner">{t.roleValueFinancePartner}</option>
+                      <option value="Logistics Provider">{t.roleValueLogisticsProvider}</option>
+                    </select>
                   </div>
                 </div>
 
                 {/* Next Button */}
                 <button
-                  onClick={handleNext}
-                  className="w-full rounded-2xl bg-[#1B5E20] dark:bg-[#2E7D32] px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#1B5E20]/20 hover:shadow-xl hover:shadow-[#1B5E20]/30 hover:bg-[#2E7D32] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 group"
+                  onClick={handleRegister}
+                  disabled={loading}
+                  className="w-full rounded-2xl bg-[#1B5E20] dark:bg-[#2E7D32] px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#1B5E20]/20 hover:shadow-xl hover:shadow-[#1B5E20]/30 hover:bg-[#2E7D32] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
-                  {t.nextBtn}
-                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  {loading ? "Registering..." : t.nextBtn}
+                  {!loading && <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />}
                 </button>
               </>
             ) : (
@@ -161,7 +283,7 @@ export default function RegisterPage() {
 
                   {/* Get OTP Button */}
                   <a
-                    href="https://t.me/YourTelegramBot"
+                    href={telegramBotLink || "https://t.me/YourTelegramBot"}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group relative flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0088cc] px-5 py-3 text-sm font-bold text-white shadow-md shadow-[#0088cc]/20 hover:shadow-lg hover:shadow-[#0088cc]/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
@@ -190,8 +312,14 @@ export default function RegisterPage() {
                       name="otp"
                       type="text"
                       maxLength={6}
+                      value={otp}
+                      onChange={(e) => {
+                        setOtp(e.target.value);
+                        setError("");
+                      }}
                       placeholder={t.otpPlaceholder}
                       className="flex h-12 w-full rounded-2xl border border-[#A5D6A7] dark:border-[#333] bg-[#FAFAFA] dark:bg-[#1a1a1a] pl-11 pr-4 py-3 text-sm text-center tracking-[0.8em] placeholder:tracking-normal placeholder:text-[#263238]/40 focus:outline-none focus:ring-2 focus:ring-[#2E7D32] dark:focus:ring-[#A5D6A7] focus:border-transparent transition-all duration-300 font-mono hover:border-[#1B5E20]"
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -215,8 +343,12 @@ export default function RegisterPage() {
                 </div>
 
                 {/* Sign Up Button */}
-                <button className="w-full rounded-2xl bg-[#1B5E20] dark:bg-[#2E7D32] px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#1B5E20]/20 hover:shadow-xl hover:shadow-[#1B5E20]/30 hover:bg-[#2E7D32] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 mt-4">
-                  {t.createAccount}
+                <button
+                  onClick={handleVerifyOtp}
+                  disabled={loading}
+                  className="w-full rounded-2xl bg-[#1B5E20] dark:bg-[#2E7D32] px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#1B5E20]/20 hover:shadow-xl hover:shadow-[#1B5E20]/30 hover:bg-[#2E7D32] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 mt-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                >
+                  {loading ? "Verifying..." : t.createAccount}
                 </button>
               </div>
             )}
@@ -225,7 +357,7 @@ export default function RegisterPage() {
           <div className="text-center">
             <Link
               href="/auth/login"
-              className="text-sm font-semibold text-white hover:underline hover:text-white transition-colors"
+              className="text-sm font-semibold text-[#1B5E20] hover:underline hover:text-[#2E7D32] transition-colors"
             >
               {t.haveAccount} <span className="font-bold">{t.loginLink}</span>
             </Link>

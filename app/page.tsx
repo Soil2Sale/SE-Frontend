@@ -48,7 +48,7 @@ export default function LandingPage() {
 
           <h1 className="text-6xl md:text-7xl font-bold tracking-tight text-[#11231D] dark:text-[#E8F5E9] leading-tight">
             Fresh Produce, <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#11231D] to-[#4F6F52] dark:from-[#D6F364] dark:to-[#22c55e]">
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-[#11231D] to-[#4F6F52] dark:from-[#D6F364] dark:to-[#22c55e]">
               Fair Prices.
             </span>
           </h1>
