@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Sprout, LogOut } from "lucide-react";
+import { Home, Sprout, LogOut, Tractor } from "lucide-react";
 
 interface NavLink {
   label: string;
@@ -48,11 +48,10 @@ export default function Sidebar() {
             <Link
               key={link.href}
               href={link.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                isActive
-                  ? "bg-[#4ade80] text-[#0d2818] font-semibold shadow-lg"
-                  : "text-gray-300 hover:bg-[#ffffff15] hover:text-white"
-              }`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
+                ? "bg-[#4ade80] text-[#0d2818] font-semibold shadow-lg"
+                : "text-gray-300 hover:bg-[#ffffff15] hover:text-white"
+                }`}
             >
               {link.icon}
               <span>{link.label}</span>
