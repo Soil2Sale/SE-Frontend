@@ -1,21 +1,118 @@
-import apiClient, {
-  setAccessToken,
-  setRefreshToken,
-  clearTokens,
-} from "../apiClient";
-import type {
-  RegisterRequest,
-  LoginRequest,
-  RefreshTokenRequest,
-  RegisterResponse,
-  LoginResponse,
-  LogoutResponse,
-  RefreshTokenResponse,
-  ForgotPasswordRequest,
-  ForgotPasswordResponse,
-  ResetPasswordRequest,
-  ResetPasswordResponse,
-} from "../../types/auth.types";
+import { i } from "motion/react-client";
+import apiClient, { setAccessToken, clearTokens, setRole } from "../apiClient";
+
+// ============================================================================
+// Request Types
+// ============================================================================
+
+export interface RegisterRequest {
+  name: string;
+  mobile_number: string;
+  role: string;
+  recovery_email?: string;
+}
+
+export interface VerifyRegistrationRequest {
+  userId: string;
+  otp: string;
+}
+
+export interface LoginRequest {
+  identifier: string; // email or mobile number
+}
+
+export interface VerifyOtpRequest {
+  userId: string;
+  otp: string;
+}
+
+// ============================================================================
+// Response Types
+// ============================================================================
+
+export interface RegisterResponse {
+  success: boolean;
+  message: string;
+  data: {
+    user: {
+      id: string;
+      name: string;
+      mobile_number: string;
+      role: string;
+      recovery_email?: string;
+      is_verified: boolean;
+      is_telegram_linked: boolean;
+      created_at: string;
+      updated_at: string;
+    };
+    telegram_bot_link: string;
+    note: string;
+  };
+}
+
+export interface VerifyRegistrationResponse {
+  success: boolean;
+  message: string;
+  data: {
+    user: {
+      id: string;
+      name: string;
+      mobile_number: string;
+      role: string;
+      recovery_email?: string;
+      is_verified: boolean;
+      is_telegram_linked: boolean;
+      created_at: string;
+      updated_at: string;
+    };
+  };
+}
+
+export interface LoginResponse {
+  success: boolean;
+  message: string;
+  data: {
+    userId: string;
+    method: "email" | "telegram";
+  };
+}
+
+export interface VerifyOtpResponse {
+  success: boolean;
+  message: string;
+  data: {
+    user: {
+      id: string;
+      name: string;
+      mobile_number: string;
+      role: string;
+      recovery_email?: string;
+      is_verified: boolean;
+      is_telegram_linked: boolean;
+      telegram_chat_id?: string;
+      created_at: string;
+      updated_at: string;
+    };
+    accessToken: string;
+  };
+}
+
+export interface RefreshTokenResponse {
+  success: boolean;
+  message: string;
+  data: {
+    accessToken: string;
+  };
+}
+
+export interface LogoutResponse {
+  success: boolean;
+  message: string;
+}
+
+// ============================================================================
+// API Functions
+// ============================================================================
 
 export const register = async (
   data: RegisterRequest,
@@ -24,27 +121,51 @@ export const register = async (
     "/auth/register",
     data,
   );
+  return response.data;
+};
 
-  if (response.data.accessToken) {
-    setAccessToken(response.data.accessToken);
-  }
-
-  if (response.data.refreshToken) {
-    setRefreshToken(response.data.refreshToken);
-  }
-
+export const verifyRegistration = async (
+  data: VerifyRegistrationRequest,
+): Promise<VerifyRegistrationResponse> => {
+  const response = await apiClient.post<VerifyRegistrationResponse>(
+    "/auth/verify-registration",
+    data,
+  );
   return response.data;
 };
 
 export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   const response = await apiClient.post<LoginResponse>("/auth/login", data);
+  return response.data;
+};
 
-  if (response.data.accessToken) {
-    setAccessToken(response.data.accessToken);
+export const verifyOtp = async (
+  data: VerifyOtpRequest,
+): Promise<VerifyOtpResponse> => {
+  const response = await apiClient.post<VerifyOtpResponse>(
+    "/auth/verify-otp",
+    data,
+  );
+
+  if (response.data.data?.accessToken) {
+    setAccessToken(response.data.data.accessToken);
   }
 
-  if (response.data.refreshToken) {
-    setRefreshToken(response.data.refreshToken);
+  if (response.data.data?.user?.role) {
+    setRole(response.data.data.user.role);
+  }
+
+  return response.data;
+};
+
+export const refreshToken = async (): Promise<RefreshTokenResponse> => {
+  const response = await apiClient.post<RefreshTokenResponse>(
+    "/auth/refresh",
+    {},
+  );
+
+  if (response.data.data?.accessToken) {
+    setAccessToken(response.data.data.accessToken);
   }
 
   return response.data;
@@ -52,49 +173,6 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
 
 export const logout = async (): Promise<LogoutResponse> => {
   const response = await apiClient.post<LogoutResponse>("/auth/logout");
-
   clearTokens();
-
-  return response.data;
-};
-
-export const refreshToken = async (
-  data: RefreshTokenRequest,
-): Promise<RefreshTokenResponse> => {
-  const response = await apiClient.post<RefreshTokenResponse>(
-    "/auth/refresh",
-    data,
-  );
-
-  if (response.data.accessToken) {
-    setAccessToken(response.data.accessToken);
-  }
-
-  if (response.data.refreshToken) {
-    setRefreshToken(response.data.refreshToken);
-  }
-
-  return response.data;
-};
-
-export const forgotPassword = async (
-  data: ForgotPasswordRequest,
-): Promise<ForgotPasswordResponse> => {
-  const response = await apiClient.post<ForgotPasswordResponse>(
-    "/auth/forgot-password",
-    data,
-  );
-
-  return response.data;
-};
-
-export const resetPassword = async (
-  data: ResetPasswordRequest,
-): Promise<ResetPasswordResponse> => {
-  const response = await apiClient.post<ResetPasswordResponse>(
-    "/auth/reset-password",
-    data,
-  );
-
   return response.data;
 };
