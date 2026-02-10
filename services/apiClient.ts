@@ -4,6 +4,7 @@ import axios, {
   InternalAxiosRequestConfig,
   AxiosResponse,
 } from "axios";
+import { config } from "process";
 
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -44,6 +45,23 @@ const setAccessToken = (token: string): void => {
   }
 };
 
+const setRole = (role: string): void => {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("role", role);
+  }
+};
+
+const getRole = (): string | null => {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("role");
+};
+
+const clearRole = (): void => {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("role");
+  }
+};
+
 const clearTokens = (): void => {
   if (typeof window !== "undefined") {
     localStorage.removeItem("accessToken");
@@ -53,6 +71,7 @@ const clearTokens = (): void => {
 const redirectToLogin = (): void => {
   if (typeof window !== "undefined") {
     clearTokens();
+    clearRole();
     window.location.href = "/auth/login";
   }
 };
@@ -174,4 +193,4 @@ export default apiClient;
 
 export type { ApiResponse, ApiError };
 
-export { setAccessToken, clearTokens };
+export { setAccessToken, clearTokens, setRole, getRole };

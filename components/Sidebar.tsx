@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Sprout, LogOut } from "lucide-react";
+import { getRole } from "../services/apiClient";
+import { DashboardRoutes } from "@/app/constants/routes";
 
 interface NavLink {
   label: string;
@@ -10,10 +12,14 @@ interface NavLink {
   icon: React.ReactNode;
 }
 
+
+
+const role = getRole();
+
 const NAV_LINKS: NavLink[] = [
   {
     label: "Dashboard",
-    href: "/user/dashboard",
+    href: DashboardRoutes[role as keyof typeof DashboardRoutes] || "/user/dashboard",
     icon: <Home className="w-5 h-5" />,
   },
   {

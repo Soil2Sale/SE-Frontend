@@ -1,4 +1,5 @@
-import apiClient, { setAccessToken, clearTokens } from "../apiClient";
+import { i } from "motion/react-client";
+import apiClient, { setAccessToken, clearTokens, setRole } from "../apiClient";
 
 // ============================================================================
 // Request Types
@@ -148,6 +149,10 @@ export const verifyOtp = async (
 
   if (response.data.data?.accessToken) {
     setAccessToken(response.data.data.accessToken);
+  }
+
+  if (response.data.data?.user?.role) {
+    setRole(response.data.data.user.role);
   }
 
   return response.data;

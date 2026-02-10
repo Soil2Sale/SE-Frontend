@@ -7,6 +7,7 @@ import { ArrowLeft, Smartphone, ShieldCheck, ArrowRight } from "lucide-react";
 import LanguageSelector from "@/components/ui/LanguageSelector";
 import { translations, Language } from "@/app/constants/translations";
 import { login, verifyOtp } from "@/services/auth/authApi";
+import { DashboardRoutes } from "@/app/constants/routes";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -65,9 +66,11 @@ export default function LoginPage() {
       });
 
       setSuccessMessage(response.message);
+
+      const role = response.data.user?.role || "user";
       
       setTimeout(() => {
-        router.push("/user/dashboard");
+        router.push(DashboardRoutes[role as keyof typeof DashboardRoutes] || "/user/dashboard");
       }, 500);
     } catch (err: any) {
       setError(err.message || "Login failed. Please try again.");
@@ -170,7 +173,7 @@ export default function LoginPage() {
               {/* Get OTP Button */}
               {method === "telegram" && otpSent ? (
                 <a
-                  href="https://t.me/YourTelegramBot"
+                  href={`https://t.me/${process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME}?start=${userId}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group relative flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0088cc] px-5 py-3 text-sm font-bold text-white shadow-md shadow-[#0088cc]/20 hover:shadow-lg hover:shadow-[#0088cc]/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
