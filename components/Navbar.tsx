@@ -33,7 +33,7 @@ export default function Navbar({
     return (
         <header className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
             <div className="relative w-full md:w-96">
-                <h1 className="text-2xl font-bold text-[#1a4d2e]">{title}</h1>
+                <h1 className="text-2xl font-bold text-[#1a4d2e]"></h1>
             </div>
 
             <div className="flex items-center gap-4">
