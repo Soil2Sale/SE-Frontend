@@ -2,33 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Sprout, LogOut, Tractor } from "lucide-react";
 import { getRole } from "../services/apiClient";
-import { DashboardRoutes } from "@/app/constants/routes";
+import { NAV_LINKS } from "@/app/constants/nav-links";
+import { Sprout, LogOut } from "lucide-react";
 
-interface NavLink {
-  label: string;
-  href: string;
-  icon: React.ReactNode;
-}
-
-
-
-const role = getRole();
-
-const NAV_LINKS: NavLink[] = [
-  {
-    label: "Dashboard",
-    href: DashboardRoutes[role as keyof typeof DashboardRoutes] || "/user/dashboard",
-    icon: <Home className="w-5 h-5" />,
-  },
-  {
-    label: "Crop Listing",
-    href: "/user/crop-listing",
-    icon: <Sprout className="w-5 h-5" />,
-  },
-];
-
+const navLinks = NAV_LINKS[getRole() || "Farmer"];
 export default function Sidebar() {
   const pathname = usePathname();
 
@@ -48,16 +26,17 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 px-4 py-6 space-y-2">
-        {NAV_LINKS.map((link) => {
+        {navLinks.map((link) => {
           const isActive = pathname === link.href;
           return (
             <Link
               key={link.href}
               href={link.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
-                ? "bg-[#4ade80] text-[#0d2818] font-semibold shadow-lg"
-                : "text-gray-300 hover:bg-[#ffffff15] hover:text-white"
-                }`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                isActive
+                  ? "bg-[#4ade80] text-[#0d2818] font-semibold shadow-lg"
+                  : "text-gray-300 hover:bg-[#ffffff15] hover:text-white"
+              }`}
             >
               {link.icon}
               <span>{link.label}</span>

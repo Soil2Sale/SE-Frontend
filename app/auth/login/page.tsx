@@ -7,7 +7,6 @@ import { ArrowLeft, Smartphone, ShieldCheck, ArrowRight } from "lucide-react";
 import LanguageSelector from "@/components/ui/LanguageSelector";
 import { translations, Language } from "@/app/constants/translations";
 import { login, verifyOtp } from "@/services/auth/authApi";
-import { DashboardRoutes } from "@/app/constants/routes";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -68,9 +67,12 @@ export default function LoginPage() {
       setSuccessMessage(response.message);
 
       const role = response.data.user?.role || "user";
-      
+
       setTimeout(() => {
-        router.push(DashboardRoutes[role as keyof typeof DashboardRoutes] || "/user/dashboard");
+        router.push(
+            `${role}/dashboard` ||
+            "/farmer/dashboard",
+        );
       }, 500);
     } catch (err: any) {
       setError(err.message || "Login failed. Please try again.");
