@@ -71,6 +71,9 @@ export const RatingWidget = () => {
                     </div>
                 </div>
                 <p className="text-sm text-gray-500 mt-2">Excellent Service</p>
+                <p className="text-xs text-gray-400 mt-1">
+                    Based on <span className="font-semibold text-gray-600">1,284</span> trips
+                </p>
             </div>
         </motion.div>
     );
