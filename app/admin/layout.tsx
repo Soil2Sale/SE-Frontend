@@ -5,12 +5,11 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
 import { getProfile } from "@/services/user/userApi";
-import { getFarmerProfileByUserId } from "@/services/farmer/farmerProfileApi";
 import { getNotificationsByUser } from "@/services/notification/notificationApi";
 import { getRole } from "@/services/apiClient";
 import { Leaf, Sprout, Truck, AlertTriangle, Bell } from "lucide-react";
 
-export default function FarmerLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -21,7 +20,6 @@ export default function FarmerLayout({
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [farmerProfile, setFarmerProfile] = useState<any>(null);
 
   useEffect(() => {
     const accessToken = localStorage.getItem("accessToken");
@@ -32,7 +30,7 @@ export default function FarmerLayout({
       return;
     }
 
-    if (role && role !== "Farmer" && role !== "Admin") {
+    if (role && role !== "Admin") {
       router.push("/");
       return;
     }
@@ -48,10 +46,6 @@ export default function FarmerLayout({
       const user = profileResp?.data || null;
       if (user) {
         setUserProfile(user);
-        const farmerResp = await getFarmerProfileByUserId(user.id).catch(
-          () => ({ data: null }),
-        );
-        setFarmerProfile(farmerResp?.data || null);
       }
       const notifsResp = await getNotificationsByUser().catch(() => ({
         data: [],
@@ -123,11 +117,7 @@ export default function FarmerLayout({
         <Navbar
           title="Dashboard"
           userName={userProfile?.name || ""}
-          userLocation={
-            farmerProfile
-              ? `${farmerProfile.location_latitude}, ${farmerProfile.location_longitude}`
-              : ""
-          }
+          userLocation={userProfile?.email || ""}
           notifications={navbarNotifications}
           onNotificationClick={() => setShowNotifications(!showNotifications)}
           showNotifications={showNotifications}

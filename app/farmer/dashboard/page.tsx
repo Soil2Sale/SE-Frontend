@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import { Leaf, Sprout, Truck, AlertTriangle, Bell } from "lucide-react";
-import Navbar from "@/components/Navbar";
+import { Sprout } from "lucide-react";
 import WeatherWidget from "@/components/WeatherWidget";
 import {
   BarChart,
@@ -18,18 +17,11 @@ import {
 } from "recharts";
 import { getActiveCropListings } from "@/services/crop-listing/cropApi";
 import { getTransactionsByUser } from "@/services/transaction/transactionApi";
-import { getNotificationsByUser } from "@/services/notification/notificationApi";
-import { getFarmerProfileByUserId } from "@/services/farmer/farmerProfileApi";
-import { getProfile } from "@/services/user/userApi";
 
 import {
   Transaction,
-  Notification,
-  NotificationType,
   WeatherData,
   Scheme,
-  FarmerProfile,
-  DashboardUser,
   TransactionType,
   TransactionStatus,
 } from "@/types/dashboard.types";
@@ -54,12 +46,6 @@ import type {
 // 8. Advisories
 
 // --- Mock Data Values ---
-
-const mockUser: DashboardUser = {
-  name: "Raghav",
-  role: "Farmer",
-  location: "Green House / Surat",
-};
 
 const mockWeather: WeatherData = {
   temp: 29,
@@ -413,36 +399,21 @@ function CropsOnSaleOverview({ listings }: { listings: CropListingCT[] }) {
 }
 
 export default function FarmerDashboard() {
-  const [showNotifications, setShowNotifications] = React.useState(false);
   const [cropListings, setCropListings] = React.useState<CropListingCT[]>([]);
   const [transactions, setTransactions] = React.useState<Transaction[]>([]);
-  const [notifications, setNotifications] = React.useState<Notification[]>([]);
   const [schemes, setSchemes] = React.useState<Scheme[]>([]);
-  const [farmerProfile, setFarmerProfile] = React.useState<any>(null);
-  const [userProfile, setUserProfile] = React.useState<any>(null);
   const [loadingData, setLoadingData] = React.useState(true);
 
   const fetchData = async () => {
     try {
-      const profileResp = await getProfile();
-      const user = profileResp?.data || null;
-      if (user) setUserProfile(user);
-
-      const [farmerResp, cropsResp, txResp, notifsResp] = await Promise.all([
-        user?.id
-          ? getFarmerProfileByUserId(user.id).catch(() => ({ data: null }))
-          : Promise.resolve({ data: null }),
+      const [cropsResp, txResp] = await Promise.all([
         getActiveCropListings().catch(() => ({ data: [] })),
         getTransactionsByUser().catch(() => ({ data: [] })),
-        getNotificationsByUser().catch(() => ({ data: [] })),
       ]);
 
-      setFarmerProfile(farmerResp?.data || null);
       setCropListings(cropsResp?.data || []);
       setTransactions(txResp?.data || []);
-      setNotifications(notifsResp?.data || []);
     } catch (e) {
-      // no-op
     } finally {
       setLoadingData(false);
     }
@@ -452,124 +423,18 @@ export default function FarmerDashboard() {
     fetchData();
   }, []);
 
-  // Map backend Notification shape to Navbar's expected shape
-  const navbarNotifications = notifications.map((n) => ({
-    id: n.id,
-    type: String(n.notification_type || ""),
-    message: n.message,
-    time: n.sent_at || "",
-    read: !!n.read_at,
-  }));
-
-  // Helper to get icon for notification
-  const getNotificationIcon = (type: NotificationType) => {
-    switch (type) {
-      case NotificationType.AI_INSIGHT:
-        return (
-          <div className="p-2 bg-blue-100 rounded-full text-blue-600">
-            <Leaf className="w-4 h-4" />
-          </div>
-        );
-      case NotificationType.SCHEME_ALERT:
-        return (
-          <div className="p-2 bg-green-100 rounded-full text-green-600">
-            <Sprout className="w-4 h-4" />
-          </div>
-        );
-      case NotificationType.ORDER_UPDATE:
-        return (
-          <div className="p-2 bg-orange-100 rounded-full text-orange-600">
-            <Truck className="w-4 h-4" />
-          </div>
-        );
-      case NotificationType.SYSTEM_ALERT:
-        return (
-          <div className="p-2 bg-red-100 rounded-full text-red-600">
-            <AlertTriangle className="w-4 h-4" />
-          </div>
-        );
-      default:
-        return (
-          <div className="p-2 bg-gray-100 rounded-full text-gray-600">
-            <Bell className="w-4 h-4" />
-          </div>
-        );
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-[#e8f5e9] p-4 lg:p-8 font-sans text-[#1a4d2e]">
-      {/* Header Section */}
-      <Navbar
-        title="Dashboard"
-        userName={userProfile?.name || ""}
-        userLocation={
-          farmerProfile
-            ? `${farmerProfile.location_latitude}, ${farmerProfile.location_longitude}`
-            : ""
-        }
-        notifications={navbarNotifications}
-        onNotificationClick={() => setShowNotifications(!showNotifications)}
-        showNotifications={showNotifications}
-        notificationIcon={
-          <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
-            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-[#f8faf9]">
-              <h3 className="font-bold text-[#1a4d2e]">Notifications</h3>
-              <button className="text-xs text-blue-600 hover:underline">
-                Mark all read
-              </button>
-            </div>
-            <div className="max-h-80 overflow-y-auto">
-              {notifications.map((n) => (
-                <div
-                  key={n.id}
-                  className={`p-4 border-b border-gray-50 hover:bg-gray-50 cursor-pointer flex gap-3 ${!n.read_at ? "bg-blue-50/30" : ""}`}
-                >
-                  <div className="flex-shrink-0 mt-1">
-                    {getNotificationIcon(
-                      n.notification_type as NotificationType,
-                    )}
-                  </div>
-                  <div>
-                    <p
-                      className={`text-sm text-gray-800 leading-snug ${!n.read_at ? "font-semibold" : ""}`}
-                    >
-                      {n.message}
-                    </p>
-                    <span className="text-xs text-gray-400 mt-1 block">
-                      {n.sent_at || ""}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="p-3 text-center border-t border-gray-100 bg-gray-50">
-              <button className="text-sm font-bold text-[#1a4d2e] hover:text-green-700">
-                View all notifications
-              </button>
-            </div>
-          </div>
-        }
-      />
-
-      {/* Main Grid Layout */}
+    <>
+      <div className="relative w-full md:w-96">
+        <h1 className="text-2xl font-bold text-[#1a4d2e]">Dashboard</h1>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* --- TOP ROW --- */}
+        <WeatherWidget location="Farmer Dashboard" weather={mockWeather} />
 
-        {/* 1. Weather Widget (Left) - Production Ready API Integration */}
-        <WeatherWidget
-          location={userProfile?.name || ""}
-          weather={mockWeather}
-        />
-
-        {/* 2. Crops on Sale Overview (Spans 2 columns) */}
         <div className="lg:col-span-2">
           <CropsOnSaleOverview listings={cropListings} />
         </div>
 
-        {/* --- BOTTOM SECTION (Split Columns) --- */}
-
-        {/* Left Side (Financials + Shipments) - 2 Cols */}
         <div className="lg:col-span-2 space-y-6">
           {/* 3. Sales & Deductions Overview (Replaces Summary of Production) */}
           <div className="bg-white rounded-3xl p-6 shadow-sm">
@@ -679,7 +544,6 @@ export default function FarmerDashboard() {
           </div>
         </div>
 
-        {/* Right Side (Advisories + Schemes) - 1 Col */}
         <div className="space-y-6">
           {/* 6. Government Schemes - Matches Sales Chart Card Height */}
           <div className="bg-[#1a4d2e] rounded-3xl p-6 shadow-sm text-white relative overflow-hidden h-96 flex flex-col">
@@ -731,6 +595,6 @@ export default function FarmerDashboard() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
