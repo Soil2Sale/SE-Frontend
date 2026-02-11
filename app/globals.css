@@ -3,6 +3,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --font-color-light: #1a4d2e;
 }
 
 @theme inline {
@@ -23,6 +24,10 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.light-theme-font{
+  color: var(--font-color-light);
 }
 
 .scrollbar-hide::-webkit-scrollbar {

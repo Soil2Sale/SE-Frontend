@@ -256,7 +256,7 @@ export default function CropListingPage() {
     <div className="min-h-screen p-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-5xl font-bold mb-3 bg-gradient-to-r from-[#4ade80] to-[#22c55e] bg-clip-text text-transparent">
+          <h1 className="text-5xl font-bold mb-3 light-theme-font">
             Crop Listing
           </h1>
           <p className="text-gray-400 text-lg">
@@ -280,9 +280,9 @@ export default function CropListingPage() {
                 showDetails ? "w-[60%]" : "w-full"
               }`}
             >
-              <div className="bg-[#0a0a0f] rounded-2xl p-6 border border-[#1a1a2e]">
+              <div className="bg-gradient-to-br from-[#dcfce7] to-[#bbf7d0] rounded-2xl p-6 shadow-lg border border-[#4ade80]/50">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <h2 className="text-2xl font-bold light-theme-font flex items-center gap-2">
                     <Package className="w-6 h-6 text-[#4ade80]" />
                     Available Crops
                   </h2>
@@ -294,13 +294,13 @@ export default function CropListingPage() {
 
                 <div className="space-y-4 mb-6">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#639376]" />
                     <input
                       type="text"
                       placeholder="Search crops..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full bg-[#1a1a2e] border border-[#2a2a3e] rounded-lg pl-10 pr-10 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#4ade80] transition-colors"
+                      className="w-full bg-white/40 backdrop-blur-md border border-[#2a2a3e] rounded-lg pl-10 pr-10 py-3 text-[#1a4d2e] placeholder-gray-500 focus:outline-none focus:border-[#4ade80] transition-colors"
                     />
                     {searchTerm && (
                       <button
@@ -318,7 +318,7 @@ export default function CropListingPage() {
                       onChange={(e) =>
                         setFilterGrade(e.target.value as QualityGrade | "ALL")
                       }
-                      className="bg-[#1a1a2e] border border-[#2a2a3e] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#4ade80] transition-colors"
+                      className="bg-white/40 backdrop-blur-md border border-[#2a2a3e] rounded-lg px-4 py-3 text-[#1a4d2e] focus:outline-none focus:border-[#4ade80] transition-colors"
                     >
                       <option value="ALL">All Grades</option>
                       <option value={QualityGrade.PREMIUM}>Premium</option>
@@ -330,7 +330,7 @@ export default function CropListingPage() {
                     <select
                       value={sortOption}
                       onChange={(e) => setSortOption(e.target.value as SortOption)}
-                      className="bg-[#1a1a2e] border border-[#2a2a3e] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#4ade80] transition-colors"
+                      className="bg-white/40 backdrop-blur-md border border-[#2a2a3e] rounded-lg px-4 py-3 text-[#1a4d2e] focus:outline-none focus:border-[#4ade80] transition-colors"
                     >
                       <option value="none">Sort By</option>
                       <option value="price_asc">Price: Low to High</option>
@@ -342,7 +342,7 @@ export default function CropListingPage() {
 
                   <div className="flex items-center gap-3">
                     <Filter className="w-5 h-5 text-[#4ade80]" />
-                    <span className="text-white font-semibold">Weight Range (kg):</span>
+                    <span className="text-[#1a4d2e] font-semibold">Weight Range (kg):</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -351,14 +351,14 @@ export default function CropListingPage() {
                       placeholder="Min weight"
                       value={minWeight}
                       onChange={(e) => setMinWeight(e.target.value)}
-                      className="bg-[#1a1a2e] border border-[#2a2a3e] rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#4ade80] transition-colors"
+                      className="bg-white/40 backdrop-blur-md  border border-[#2a2a3e] rounded-lg px-4 py-3 text-[#1a4d2e] placeholder-gray-500 focus:outline-none focus:border-[#4ade80] transition-colors"
                     />
                     <input
                       type="number"
                       placeholder="Max weight"
                       value={maxWeight}
                       onChange={(e) => setMaxWeight(e.target.value)}
-                      className="bg-[#1a1a2e] border border-[#2a2a3e] rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#4ade80] transition-colors"
+                      className="bg-white/40 backdrop-blur-md  border border-[#2a2a3e] rounded-lg px-4 py-3 text-[#1a4d2e] placeholder-gray-500 focus:outline-none focus:border-[#4ade80] transition-colors"
                     />
                   </div>
                 </div>

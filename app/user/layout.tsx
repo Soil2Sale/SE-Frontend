@@ -37,7 +37,7 @@ export default function UserLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-[#060010]">
+    <div className="flex min-h-screen bg-[#e8f5e9]">
       <Sidebar />
       <main className="flex-1 overflow-auto">{children}</main>
     </div>

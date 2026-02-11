@@ -1,13 +1,7 @@
 "use client";
 
 import React from "react";
-import {
-  Leaf,
-  Sprout,
-  Truck,
-  AlertTriangle,
-  Bell,
-} from "lucide-react";
+import { Leaf, Sprout, Truck, AlertTriangle, Bell } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import WeatherWidget from "@/components/WeatherWidget";
 import {
@@ -20,124 +14,54 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
+  Cell,
 } from "recharts";
+import { getActiveCropListings } from "@/services/crop-listing/cropApi";
+import { getTransactionsByUser } from "@/services/transaction/transactionApi";
+import { getNotificationsByUser } from "@/services/notification/notificationApi";
+import { getFarmerProfileByUserId } from "@/services/farmer/farmerProfileApi";
+import { getProfile } from "@/services/user/userApi";
 
-// --- Mock Data Types (Mirroring Backend Models EXACTLY) ---
+import {
+  Transaction,
+  Notification,
+  NotificationType,
+  WeatherData,
+  Scheme,
+  FarmerProfile,
+  DashboardUser,
+  TransactionType,
+  TransactionStatus,
+} from "@/types/dashboard.types";
 
-// 1. User & FarmerProfile
-interface MockUser {
-  name: string;
-  role: "Farmer";
-  location: string;
-  avatar_url?: string;
-}
+import { CropListingStatus } from "@/types/crop.types";
 
-// 2. Weather Data
-interface MockWeather {
-  temp: number;
-  condition: string;
-  humidity: number;
-  wind_speed: number;
-  pressure: number;
-  advisory: string;
-  uv_index: number;
-  max_temp: number;
-  min_temp: number;
-  next_rain: string;
-}
+import type {
+  CropListing as CropListingCT,
+  QualityGrade as QualityGradeCT,
+} from "@/types/crop.types";
 
-// 3. Crop Listing (Revised for Crops on Sale)
-enum CropStatus {
-  DRAFT = "DRAFT",
-  ACTIVE = "ACTIVE",
-  UNDER_NEGOTIATION = "UNDER_NEGOTIATION",
-  SOLD = "SOLD",
-  CANCELLED = "CANCELLED"
-}
+// Types (moved to `types/dashboard.types.ts`)
 
-enum QualityGrade {
-  PREMIUM = "PREMIUM",
-  STANDARD = "STANDARD",
-  ECONOMY = "ECONOMY"
-}
+// Crop listing related types are in `types/dashboard.types.ts`
 
-interface MockCropListing {
-  id: string;
-  crop_name: string;
-  quantity: number;
-  expected_price: number; // Price per unit
-  quality_grade: QualityGrade;
-  status: CropStatus;
-  created_at: string; // ISO date
-}
+// Transaction types are defined in `types/dashboard.types.ts`
 
-// 4. Transactions (Restoring MockTransaction logic)
-enum TransactionType {
-  CROP_SALE = "CROP_SALE",
-  LOGISTICS_FEE = "LOGISTICS_FEE",
-  BNPL_DEDUCTION = "BNPL_DEDUCTION",
-  REFUND = "REFUND",
-  ADJUSTMENT = "ADJUSTMENT",
-}
+// Scheme type moved to `types/dashboard.types.ts`
 
-enum TransactionStatus {
-  INITIATED = "INITIATED",
-  SUCCESS = "SUCCESS",
-  FAILED = "FAILED",
-  REFUNDED = "REFUNDED",
-}
-
-interface MockTransaction {
-  id: string;
-  amount: number;
-  type: TransactionType;
-  status: TransactionStatus;
-  completed_at: string; // ISO Date
-}
-
-// 5. Government Schemes
-interface MockScheme {
-  id: string;
-  name: string;
-  description: string;
-  deadline: string;
-  state: string;
-  crop?: string; // Optional, as not all schemes are crop-specific
-  land_size_min?: number; // Optional
-  land_size_max?: number; // Optional
-}
-
-// 6. Notifications (Matching Backend Types)
-enum NotificationType {
-  ORDER_UPDATE = "ORDER_UPDATE",
-  SCHEME_ALERT = "SCHEME_ALERT",
-  AI_INSIGHT = "AI_INSIGHT", // Advice/Precaution
-  SYSTEM_ALERT = "SYSTEM_ALERT"
-}
-
-interface MockNotification {
-  id: string;
-  type: NotificationType;
-  message: string;
-  time: string;
-  read: boolean;
-}
-
-
+// Notification types moved to `types/dashboard.types.ts`
 
 // 8. Advisories
 
-
 // --- Mock Data Values ---
 
-const mockUser: MockUser = {
+const mockUser: DashboardUser = {
   name: "Raghav",
   role: "Farmer",
-  location: "Green House / Surat"
+  location: "Green House / Surat",
 };
 
-const mockWeather: MockWeather = {
+const mockWeather: WeatherData = {
   temp: 29,
   condition: "Mostly sunny",
   humidity: 62,
@@ -147,7 +71,7 @@ const mockWeather: MockWeather = {
   uv_index: 8,
   max_temp: 34,
   min_temp: 24,
-  next_rain: "Tue, 4 PM"
+  next_rain: "Tue, 4 PM",
 };
 
 // HELPER: Generate date X days ago
@@ -157,6 +81,7 @@ const daysAgo = (days: number) => {
   return d.toISOString();
 };
 
+/*
 const mockCropListings: MockCropListing[] = [
   // Fresh (0-7 days) - 3 crops
   { id: "1", crop_name: "Cotton", quantity: 100, expected_price: 600, quality_grade: QualityGrade.PREMIUM, status: CropStatus.ACTIVE, created_at: daysAgo(2) },
@@ -174,8 +99,10 @@ const mockCropListings: MockCropListing[] = [
   // Others (Not included in metric)
   { id: "8", crop_name: "Tomatoes", quantity: 50, expected_price: 40, quality_grade: QualityGrade.STANDARD, status: CropStatus.SOLD, created_at: daysAgo(40) },
 ];
+*/
 
 // Generate Realistic Transactions for last 6 months
+/*
 const generateMockTransactions = () => {
   const transactions: MockTransaction[] = [];
   const months = 4;
@@ -212,103 +139,96 @@ const generateMockTransactions = () => {
   return transactions;
 };
 
-const mockTransactions = generateMockTransactions();
+*/
 
 // Process Transactions for Chart
-const processTransactions = (transactions: MockTransaction[]) => {
-  const groupedData: Record<string, { month: string; sales: number; deductions: number; profit: number; dateObj: Date }> = {};
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const processTransactions = (transactions: Transaction[]) => {
+  const groupedData: Record<
+    string,
+    {
+      month: string;
+      sales: number;
+      deductions: number;
+      profit: number;
+      dateObj: Date;
+    }
+  > = {};
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
 
-  transactions.forEach(txn => {
+  transactions.forEach((txn) => {
     if (txn.status !== TransactionStatus.SUCCESS) return;
 
     const date = new Date(txn.completed_at);
     const monthKey = `${months[date.getMonth()]}`;
 
     if (!groupedData[monthKey]) {
-      groupedData[monthKey] = { month: monthKey, sales: 0, deductions: 0, profit: 0, dateObj: date };
+      groupedData[monthKey] = {
+        month: monthKey,
+        sales: 0,
+        deductions: 0,
+        profit: 0,
+        dateObj: date,
+      };
     }
 
     if (txn.type === TransactionType.CROP_SALE) {
       groupedData[monthKey].sales += txn.amount;
-    } else if ([TransactionType.LOGISTICS_FEE, TransactionType.BNPL_DEDUCTION, TransactionType.ADJUSTMENT].includes(txn.type)) {
+    } else if (
+      [
+        TransactionType.LOGISTICS_FEE,
+        TransactionType.BNPL_DEDUCTION,
+        TransactionType.ADJUSTMENT,
+      ].includes(txn.type)
+    ) {
       groupedData[monthKey].deductions += txn.amount;
     }
   });
 
   // Calculate Profit (Net Earnings)
-  Object.values(groupedData).forEach(group => {
+  Object.values(groupedData).forEach((group) => {
     group.profit = group.sales - group.deductions;
   });
 
-  return Object.values(groupedData).sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
+  return Object.values(groupedData).sort(
+    (a, b) => a.dateObj.getTime() - b.dateObj.getTime(),
+  );
 };
 
-const mockSchemes: MockScheme[] = [
-  {
-    id: "SCH001",
-    name: "PM Fasal Bima Yojana",
-    description: "Crop insurance against natural calamities. Provides financial support to farmers suffering crop loss/damage arising out of unforeseen events.",
-    deadline: "30 Oct 2024",
-    state: "Maharashtra",
-    crop: "All major crops",
-    land_size_min: 0.5
-  },
-  {
-    id: "SCH002",
-    name: "Fertilizer Subsidy Scheme",
-    description: "50% subsidy on organic fertilizers to promote sustainable farming practices and reduce chemical usage.",
-    deadline: "15 Dec 2024",
-    state: "Central",
-    crop: "All crops"
-  },
-  {
-    id: "SCH003",
-    name: "Solar Pump Installation",
-    description: "90% grant for solar water pumps to reduce dependency on grid electricity and diesel, ensuring irrigation.",
-    deadline: "31 Jan 2025",
-    state: "Gujarat",
-    land_size_min: 1,
-    land_size_max: 5
-  },
-  {
-    id: "SCH004",
-    name: "Kisan Credit Card (KCC)",
-    description: "Provides timely and adequate credit to farmers for their agricultural needs from a single window.",
-    deadline: "Ongoing",
-    state: "All States",
-    crop: "All crops"
-  },
-  {
-    id: "SCH005",
-    name: "National Food Security Mission",
-    description: "Aims to increase production of rice, wheat, pulses, coarse cereals and commercial crops through area expansion and productivity enhancement.",
-    deadline: "Ongoing",
-    state: "Central",
-    crop: "Rice, Wheat, Pulses"
-  },
-];
+/*
+const mockSchemes: MockScheme[] = [ ... ];
+*/
 
-
-
-const mockNotifications: MockNotification[] = [
-  { id: '1', type: NotificationType.AI_INSIGHT, message: 'Pest attack predicted for Cotton in 3 days. Apply Neem oil immediately.', time: '2h ago', read: false },
-  { id: '2', type: NotificationType.SCHEME_ALERT, message: 'New subsidy for drip irrigation available in Maharashtra.', time: '5h ago', read: false },
-  { id: '3', type: NotificationType.ORDER_UPDATE, message: 'Values for Order #ORD-102 updated. Check wallet.', time: '1d ago', read: true },
-  { id: '4', type: NotificationType.SYSTEM_ALERT, message: 'Server maintenance scheduled for tonight 2 AM - 4 AM.', time: '2d ago', read: true }
-];
-
-
+/*
+const mockNotifications: MockNotification[] = [ ... ];
+*/
 
 // --- Components ---
 
-function CropsOnSaleOverview({ listings }: { listings: MockCropListing[] }) {
-  // 1. Filter for ACTIVE Status
-  const activeListings = listings.filter(l => l.status === CropStatus.ACTIVE);
+function CropsOnSaleOverview({ listings }: { listings: CropListingCT[] }) {
+  // 1. Filter for ACTIVE Status (backend uses CropListingStatus)
+  const activeListings = listings.filter(
+    (l) => l.status === (CropListingStatus.ACTIVE as unknown as string),
+  );
 
   // 2. Calculate Total Expected Value
   // Sum of (quantity * expected_price)
-  const totalExpectedValue = activeListings.reduce((sum, item) => sum + (item.quantity * item.expected_price), 0);
+  const totalExpectedValue = activeListings.reduce(
+    (sum, item) => sum + item.quantity * item.expected_price,
+    0,
+  );
 
   // 3. Logic: Fresh / Waiting / Stuck
   const now = new Date();
@@ -316,7 +236,7 @@ function CropsOnSaleOverview({ listings }: { listings: MockCropListing[] }) {
   let waitingCount = 0;
   let stuckCount = 0;
 
-  activeListings.forEach(item => {
+  activeListings.forEach((item) => {
     const created = new Date(item.created_at);
     const diffTime = Math.abs(now.getTime() - created.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -326,77 +246,106 @@ function CropsOnSaleOverview({ listings }: { listings: MockCropListing[] }) {
     else stuckCount++;
   });
 
-  // 4. Quality Mix for Donut Chart
-  const qualityCounts = {
-    [QualityGrade.PREMIUM]: 0,
-    [QualityGrade.STANDARD]: 0,
-    [QualityGrade.ECONOMY]: 0
-  };
-  activeListings.forEach(item => {
-    if (qualityCounts[item.quality_grade] !== undefined) {
-      qualityCounts[item.quality_grade]++;
-    }
+  // 4. Quality Mix for Donut Chart: count by returned quality_grade string
+  const qualityCounts: Record<string, number> = {};
+  activeListings.forEach((item) => {
+    const q = String(item.quality_grade);
+    qualityCounts[q] = (qualityCounts[q] || 0) + 1;
   });
 
-  const qualityData = [
-    { name: 'Premium', value: qualityCounts[QualityGrade.PREMIUM], color: '#1a4d2e' },
-    { name: 'Standard', value: qualityCounts[QualityGrade.STANDARD], color: '#4ade80' },
-    { name: 'Economy', value: qualityCounts[QualityGrade.ECONOMY], color: '#fbbf24' }, // Amber-400
-  ].filter(d => d.value > 0);
+  const qualityData = Object.entries(qualityCounts)
+    .map(([k, v]) => {
+      const name = k;
+      const key = k.toLowerCase();
+      const color = key.includes("premium")
+        ? "#1a4d2e"
+        : key.includes("standard")
+          ? "#4ade80"
+          : "#fbbf24";
+      return { name, value: v, color };
+    })
+    .filter((d) => d.value > 0);
 
   // Format currency
   const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
     }).format(val);
   };
 
   return (
     <div className="bg-white rounded-3xl p-6 shadow-sm flex flex-col md:flex-row gap-8">
-
       {/* LEFT: Primary Metric & Market Movement */}
       <div className="flex-1 flex flex-col justify-between">
-
         {/* Top Section */}
         <div>
-          <h3 className="text-gray-500 text-sm font-semibold mb-1">Money Expected From Crops on Sale</h3>
+          <h3 className="text-gray-500 text-sm font-semibold mb-1">
+            Money Expected From Crops on Sale
+          </h3>
           <div className="text-5xl font-bold text-[#1a4d2e] mb-2">
             {formatCurrency(totalExpectedValue)}
           </div>
           <p className="text-sm text-gray-500 flex items-center gap-2">
-            <span className="font-bold text-[#1a4d2e]">{activeListings.length} active crops</span>
+            <span className="font-bold text-[#1a4d2e]">
+              {activeListings.length} active crops
+            </span>
           </p>
         </div>
 
         {/* Middle Section: Market Movement */}
         <div className="mt-8">
           <div className="flex justify-between items-end mb-2">
-            <label className="text-xl font-bold text-[#1a4d2e]">Market Movement</label>
-            <span className="text-xs text-gray-400">Based on listing duration</span>
+            <label className="text-xl font-bold text-[#1a4d2e]">
+              Market Movement
+            </label>
+            <span className="text-xs text-gray-400">
+              Based on listing duration
+            </span>
           </div>
 
           {/* Visual Bar */}
           <div className="h-4 w-full flex rounded-full overflow-hidden mb-3">
-            <div style={{ flex: freshCount }} className="bg-[#1a4d2e] h-full" title="Fresh"></div>
-            <div style={{ flex: waitingCount }} className="bg-[#4ade80] h-full" title="Waiting"></div>
-            <div style={{ flex: stuckCount }} className="bg-[#fbbf24] h-full" title="Stuck"></div>
+            <div
+              style={{ flex: freshCount }}
+              className="bg-[#1a4d2e] h-full"
+              title="Fresh"
+            ></div>
+            <div
+              style={{ flex: waitingCount }}
+              className="bg-[#4ade80] h-full"
+              title="Waiting"
+            ></div>
+            <div
+              style={{ flex: stuckCount }}
+              className="bg-[#fbbf24] h-full"
+              title="Stuck"
+            ></div>
           </div>
 
           {/* Legend / Counts */}
           <div className="flex gap-6 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-[#1a4d2e]"></div>
-              <span className="text-gray-600">Fresh: <b>{freshCount}</b> <span className="text-xs text-gray-400">(0-7d)</span></span>
+              <span className="text-gray-600">
+                Fresh: <b>{freshCount}</b>{" "}
+                <span className="text-xs text-gray-400">(0-7d)</span>
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-[#4ade80]"></div>
-              <span className="text-gray-600">Waiting: <b>{waitingCount}</b> <span className="text-xs text-gray-400">(8-21d)</span></span>
+              <span className="text-gray-600">
+                Waiting: <b>{waitingCount}</b>{" "}
+                <span className="text-xs text-gray-400">(8-21d)</span>
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-[#fbbf24]"></div>
-              <span className="text-gray-600">Stuck: <b>{stuckCount}</b> <span className="text-xs text-gray-400">(21d+)</span></span>
+              <span className="text-gray-600">
+                Stuck: <b>{stuckCount}</b>{" "}
+                <span className="text-xs text-gray-400">(21d+)</span>
+              </span>
             </div>
           </div>
         </div>
@@ -404,7 +353,9 @@ function CropsOnSaleOverview({ listings }: { listings: MockCropListing[] }) {
 
       {/* RIGHT: Quality Mix Donut */}
       <div className="w-full md:w-64 flex flex-col items-center justify-center border-t md:border-t-0 md:border-l border-gray-100 pt-6 md:pt-0 md:pl-6">
-        <h4 className="text-xl font-bold text-gray-700 mb-4 self-start md:self-center">Crop Quality Mix</h4>
+        <h4 className="text-xl font-bold text-gray-700 mb-4 self-start md:self-center">
+          Crop Quality Mix
+        </h4>
         <div className="w-40 h-40 relative">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -424,23 +375,35 @@ function CropsOnSaleOverview({ listings }: { listings: MockCropListing[] }) {
               </Pie>
               <Tooltip
                 formatter={(value, name) => [`${value} Crops`, name]}
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '8px 12px' }}
+                contentStyle={{
+                  borderRadius: "8px",
+                  border: "none",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  padding: "8px 12px",
+                }}
                 position={{ x: 0, y: 160 }} // Force tooltip to bottom
-                cursor={{ fill: 'transparent' }}
+                cursor={{ fill: "transparent" }}
               />
             </PieChart>
           </ResponsiveContainer>
           {/* Center Text */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span className="text-2xl font-bold text-[#1a4d2e]">{activeListings.length}</span>
+            <span className="text-2xl font-bold text-[#1a4d2e]">
+              {activeListings.length}
+            </span>
           </div>
         </div>
         {/* Legend - Centered & Flexible */}
         <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-xs">
           {qualityData.map((d) => (
             <div key={d.name} className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }}></div>
-              <span className="text-gray-500">{d.name} ({d.value})</span>
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: d.color }}
+              ></div>
+              <span className="text-gray-500">
+                {d.name} ({d.value})
+              </span>
             </div>
           ))}
         </div>
@@ -451,50 +414,139 @@ function CropsOnSaleOverview({ listings }: { listings: MockCropListing[] }) {
 
 export default function FarmerDashboard() {
   const [showNotifications, setShowNotifications] = React.useState(false);
+  const [cropListings, setCropListings] = React.useState<CropListingCT[]>([]);
+  const [transactions, setTransactions] = React.useState<Transaction[]>([]);
+  const [notifications, setNotifications] = React.useState<Notification[]>([]);
+  const [schemes, setSchemes] = React.useState<Scheme[]>([]);
+  const [farmerProfile, setFarmerProfile] = React.useState<any>(null);
+  const [userProfile, setUserProfile] = React.useState<any>(null);
+  const [loadingData, setLoadingData] = React.useState(true);
+
+  const fetchData = async () => {
+    try {
+      const profileResp = await getProfile();
+      const user = profileResp?.data || null;
+      if (user) setUserProfile(user);
+
+      const [farmerResp, cropsResp, txResp, notifsResp] = await Promise.all([
+        user?.id
+          ? getFarmerProfileByUserId(user.id).catch(() => ({ data: null }))
+          : Promise.resolve({ data: null }),
+        getActiveCropListings().catch(() => ({ data: [] })),
+        getTransactionsByUser().catch(() => ({ data: [] })),
+        getNotificationsByUser().catch(() => ({ data: [] })),
+      ]);
+
+      setFarmerProfile(farmerResp?.data || null);
+      setCropListings(cropsResp?.data || []);
+      setTransactions(txResp?.data || []);
+      setNotifications(notifsResp?.data || []);
+    } catch (e) {
+      // no-op
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Map backend Notification shape to Navbar's expected shape
+  const navbarNotifications = notifications.map((n) => ({
+    id: n.id,
+    type: String(n.notification_type || ""),
+    message: n.message,
+    time: n.sent_at || "",
+    read: !!n.read_at,
+  }));
 
   // Helper to get icon for notification
   const getNotificationIcon = (type: NotificationType) => {
     switch (type) {
-      case NotificationType.AI_INSIGHT: return <div className="p-2 bg-blue-100 rounded-full text-blue-600"><Leaf className="w-4 h-4" /></div>;
-      case NotificationType.SCHEME_ALERT: return <div className="p-2 bg-green-100 rounded-full text-green-600"><Sprout className="w-4 h-4" /></div>;
-      case NotificationType.ORDER_UPDATE: return <div className="p-2 bg-orange-100 rounded-full text-orange-600"><Truck className="w-4 h-4" /></div>;
-      case NotificationType.SYSTEM_ALERT: return <div className="p-2 bg-red-100 rounded-full text-red-600"><AlertTriangle className="w-4 h-4" /></div>;
-      default: return <div className="p-2 bg-gray-100 rounded-full text-gray-600"><Bell className="w-4 h-4" /></div>;
+      case NotificationType.AI_INSIGHT:
+        return (
+          <div className="p-2 bg-blue-100 rounded-full text-blue-600">
+            <Leaf className="w-4 h-4" />
+          </div>
+        );
+      case NotificationType.SCHEME_ALERT:
+        return (
+          <div className="p-2 bg-green-100 rounded-full text-green-600">
+            <Sprout className="w-4 h-4" />
+          </div>
+        );
+      case NotificationType.ORDER_UPDATE:
+        return (
+          <div className="p-2 bg-orange-100 rounded-full text-orange-600">
+            <Truck className="w-4 h-4" />
+          </div>
+        );
+      case NotificationType.SYSTEM_ALERT:
+        return (
+          <div className="p-2 bg-red-100 rounded-full text-red-600">
+            <AlertTriangle className="w-4 h-4" />
+          </div>
+        );
+      default:
+        return (
+          <div className="p-2 bg-gray-100 rounded-full text-gray-600">
+            <Bell className="w-4 h-4" />
+          </div>
+        );
     }
   };
 
   return (
     <div className="min-h-screen bg-[#e8f5e9] p-4 lg:p-8 font-sans text-[#1a4d2e]">
-
       {/* Header Section */}
       <Navbar
         title="Dashboard"
-        userName={mockUser.name}
-        userLocation={mockUser.location}
-        notifications={mockNotifications}
+        userName={userProfile?.name || ""}
+        userLocation={
+          farmerProfile
+            ? `${farmerProfile.location_latitude}, ${farmerProfile.location_longitude}`
+            : ""
+        }
+        notifications={navbarNotifications}
         onNotificationClick={() => setShowNotifications(!showNotifications)}
         showNotifications={showNotifications}
         notificationIcon={
           <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
             <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-[#f8faf9]">
               <h3 className="font-bold text-[#1a4d2e]">Notifications</h3>
-              <button className="text-xs text-blue-600 hover:underline">Mark all read</button>
+              <button className="text-xs text-blue-600 hover:underline">
+                Mark all read
+              </button>
             </div>
             <div className="max-h-80 overflow-y-auto">
-              {mockNotifications.map(n => (
-                <div key={n.id} className={`p-4 border-b border-gray-50 hover:bg-gray-50 cursor-pointer flex gap-3 ${!n.read ? 'bg-blue-50/30' : ''}`}>
+              {notifications.map((n) => (
+                <div
+                  key={n.id}
+                  className={`p-4 border-b border-gray-50 hover:bg-gray-50 cursor-pointer flex gap-3 ${!n.read_at ? "bg-blue-50/30" : ""}`}
+                >
                   <div className="flex-shrink-0 mt-1">
-                    {getNotificationIcon(n.type)}
+                    {getNotificationIcon(
+                      n.notification_type as NotificationType,
+                    )}
                   </div>
                   <div>
-                    <p className={`text-sm text-gray-800 leading-snug ${!n.read ? 'font-semibold' : ''}`}>{n.message}</p>
-                    <span className="text-xs text-gray-400 mt-1 block">{n.time}</span>
+                    <p
+                      className={`text-sm text-gray-800 leading-snug ${!n.read_at ? "font-semibold" : ""}`}
+                    >
+                      {n.message}
+                    </p>
+                    <span className="text-xs text-gray-400 mt-1 block">
+                      {n.sent_at || ""}
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
             <div className="p-3 text-center border-t border-gray-100 bg-gray-50">
-              <button className="text-sm font-bold text-[#1a4d2e] hover:text-green-700">View all notifications</button>
+              <button className="text-sm font-bold text-[#1a4d2e] hover:text-green-700">
+                View all notifications
+              </button>
             </div>
           </div>
         }
@@ -502,31 +554,30 @@ export default function FarmerDashboard() {
 
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
         {/* --- TOP ROW --- */}
 
         {/* 1. Weather Widget (Left) - Production Ready API Integration */}
         <WeatherWidget
-          location={mockUser.location.split(' / ')[1]}
+          location={userProfile?.name || ""}
           weather={mockWeather}
         />
 
         {/* 2. Crops on Sale Overview (Spans 2 columns) */}
         <div className="lg:col-span-2">
-          <CropsOnSaleOverview listings={mockCropListings} />
+          <CropsOnSaleOverview listings={cropListings} />
         </div>
-
 
         {/* --- BOTTOM SECTION (Split Columns) --- */}
 
         {/* Left Side (Financials + Shipments) - 2 Cols */}
         <div className="lg:col-span-2 space-y-6">
-
           {/* 3. Sales & Deductions Overview (Replaces Summary of Production) */}
           <div className="bg-white rounded-3xl p-6 shadow-sm">
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h3 className="text-[#1a4d2e] font-bold text-2xl">Net Earnings</h3>
+                <h3 className="text-[#1a4d2e] font-bold text-2xl">
+                  Net Earnings
+                </h3>
                 <div className="flex gap-4 mt-2">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-[#4ade80]"></div>
@@ -545,23 +596,53 @@ export default function FarmerDashboard() {
             </div>
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={processTransactions(mockTransactions)} barGap={4}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#000000', fontSize: 12, fontWeight: 500 }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#000000', fontSize: 12, fontWeight: 500 }} />
+                <BarChart data={processTransactions(transactions)} barGap={4}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="#f0f0f0"
+                  />
+                  <XAxis
+                    dataKey="month"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "#000000", fontSize: 12, fontWeight: 500 }}
+                    dy={10}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "#000000", fontSize: 12, fontWeight: 500 }}
+                  />
                   <Tooltip
-                    cursor={{ fill: 'transparent' }}
+                    cursor={{ fill: "transparent" }}
                     content={({ active, payload, label }) => {
                       if (active && payload && payload.length) {
                         return (
                           <div className="bg-white p-3 rounded-xl shadow-lg border border-gray-100">
-                            <p className="font-bold text-[#1a4d2e] mb-2">{label}</p>
+                            <p className="font-bold text-[#1a4d2e] mb-2">
+                              {label}
+                            </p>
                             {payload.map((entry: any, index: number) => (
-                              <div key={index} className="flex items-center gap-2 text-sm mb-1">
-                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }}></div>
-                                <span className="text-gray-500 capitalize">{entry.name}:</span>
-                                <span className="font-bold" style={{ color: entry.color }}>
-                                  ₹{new Intl.NumberFormat('en-IN', { notation: "compact" }).format(entry.value)}
+                              <div
+                                key={index}
+                                className="flex items-center gap-2 text-sm mb-1"
+                              >
+                                <div
+                                  className="w-2 h-2 rounded-full"
+                                  style={{ backgroundColor: entry.color }}
+                                ></div>
+                                <span className="text-gray-500 capitalize">
+                                  {entry.name}:
+                                </span>
+                                <span
+                                  className="font-bold"
+                                  style={{ color: entry.color }}
+                                >
+                                  ₹
+                                  {new Intl.NumberFormat("en-IN", {
+                                    notation: "compact",
+                                  }).format(entry.value)}
                                 </span>
                               </div>
                             ))}
@@ -571,23 +652,35 @@ export default function FarmerDashboard() {
                       return null;
                     }}
                   />
-                  <Bar dataKey="sales" name="Sales" fill="#4ade80" radius={[4, 4, 4, 4]} barSize={24} />
-                  <Bar dataKey="deductions" name="Deductions" fill="#fbbf24" radius={[4, 4, 4, 4]} barSize={24} />
-                  <Bar dataKey="profit" name="Net Profit" fill="#166534" radius={[4, 4, 4, 4]} barSize={24} />
+                  <Bar
+                    dataKey="sales"
+                    name="Sales"
+                    fill="#4ade80"
+                    radius={[4, 4, 4, 4]}
+                    barSize={24}
+                  />
+                  <Bar
+                    dataKey="deductions"
+                    name="Deductions"
+                    fill="#fbbf24"
+                    radius={[4, 4, 4, 4]}
+                    barSize={24}
+                  />
+                  <Bar
+                    dataKey="profit"
+                    name="Net Profit"
+                    fill="#166534"
+                    radius={[4, 4, 4, 4]}
+                    barSize={24}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
-
-
-
         </div>
 
         {/* Right Side (Advisories + Schemes) - 1 Col */}
         <div className="space-y-6">
-
-
-
           {/* 6. Government Schemes - Matches Sales Chart Card Height */}
           <div className="bg-[#1a4d2e] rounded-3xl p-6 shadow-sm text-white relative overflow-hidden h-96 flex flex-col">
             <div className="absolute top-0 right-0 p-4 opacity-20 pointer-events-none">
@@ -599,22 +692,35 @@ export default function FarmerDashboard() {
 
             <div className="mb-4 relative z-10">
               <h3 className="text-2xl font-bold mb-1">Govt Schemes</h3>
-              <p className="text-green-200 text-sm">Eligible benefits matching your profile</p>
+              <p className="text-green-200 text-sm">
+                Eligible benefits matching your profile
+              </p>
             </div>
 
             <div className="space-y-4 overflow-y-auto pr-2 relative z-10 flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-              {mockSchemes.map((scheme) => (
-                <div key={scheme.id} className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 hover:bg-white/10 transition-all cursor-pointer group">
+              {schemes.map((scheme) => (
+                <div
+                  key={scheme.id}
+                  className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 hover:bg-white/10 transition-all cursor-pointer group"
+                >
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h4 className="font-bold text-lg text-amber-200 transition-colors">{scheme.name}</h4>
-                      <p className="text-xs text-[#4ade80] uppercase tracking-wider font-semibold mt-1">{scheme.state}</p>
+                      <h4 className="font-bold text-lg text-amber-200 transition-colors">
+                        {scheme.name}
+                      </h4>
+                      <p className="text-xs text-[#4ade80] uppercase tracking-wider font-semibold mt-1">
+                        {scheme.state}
+                      </p>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-200 leading-snug mb-3">{scheme.description}</p>
+                  <p className="text-sm text-gray-200 leading-snug mb-3">
+                    {scheme.description}
+                  </p>
 
                   <div className="flex items-center justify-between border-t border-white/10 pt-3 mt-1">
-                    <span className="text-xs text-green-200 font-medium">Deadline: {scheme.deadline}</span>
+                    <span className="text-xs text-green-200 font-medium">
+                      Deadline: {scheme.deadline}
+                    </span>
                     <button className="bg-[#4ade80] text-[#1a4d2e] px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#4ade80]/90 transition-colors flex items-center gap-1 shadow-sm">
                       View Details
                     </button>
@@ -624,7 +730,6 @@ export default function FarmerDashboard() {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
