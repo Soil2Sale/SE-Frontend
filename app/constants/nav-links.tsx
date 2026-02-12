@@ -246,7 +246,7 @@ export const PROFILE_LINKS: Record<string, NavLink[]> = {
     },
     {
       label: "Offers Received",
-      href: "/farmer/profile/offers-received",
+      href: "/farmer/profile/offers",
       icon: <Handshake className="w-5 h-5" />,
     },
     {
@@ -256,7 +256,7 @@ export const PROFILE_LINKS: Record<string, NavLink[]> = {
     },
     {
       label: "Orders Sold",
-      href: "/farmer/profile/orders-sold",
+      href: "/farmer/profile/orders",
       icon: <Package className="w-5 h-5" />,
     },
     {

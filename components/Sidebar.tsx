@@ -1,14 +1,22 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getRole } from "../services/apiClient";
 import { NAV_LINKS } from "@/app/constants/nav-links";
 import { Sprout, LogOut } from "lucide-react";
 
-const navLinks = NAV_LINKS[getRole() || "Farmer"];
 export default function Sidebar() {
   const pathname = usePathname();
+  const [role, setRole] = useState<string>("Farmer");
+
+  useEffect(() => {
+    // Ensure this runs only on client side after mount
+    setRole(getRole() || "Farmer");
+  }, []);
+
+  const navLinks = NAV_LINKS[role] || NAV_LINKS["Farmer"];
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
@@ -32,11 +40,10 @@ export default function Sidebar() {
             <Link
               key={link.href}
               href={link.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                isActive
-                  ? "bg-[#4ade80] text-[#0d2818] font-semibold shadow-lg"
-                  : "text-gray-300 hover:bg-[#ffffff15] hover:text-white"
-              }`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
+                ? "bg-[#4ade80] text-[#0d2818] font-semibold shadow-lg"
+                : "text-gray-300 hover:bg-[#ffffff15] hover:text-white"
+                }`}
             >
               {link.icon}
               <span>{link.label}</span>
