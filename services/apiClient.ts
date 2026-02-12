@@ -4,6 +4,7 @@ import axios, {
   InternalAxiosRequestConfig,
   AxiosResponse,
 } from "axios";
+import { config } from "process";
 
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -27,6 +28,7 @@ const apiClient: AxiosInstance = axios.create({
     "Content-Type": "application/json",
   },
   timeout: 10000,
+  withCredentials: true, // Enable sending cookies with requests
 });
 
 let isRefreshing = false;
@@ -37,63 +39,60 @@ const getAccessToken = (): string | null => {
   return localStorage.getItem("accessToken");
 };
 
-const getRefreshToken = (): string | null => {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("refreshToken");
-};
-
 const setAccessToken = (token: string): void => {
   if (typeof window !== "undefined") {
     localStorage.setItem("accessToken", token);
   }
 };
 
-const setRefreshToken = (token: string): void => {
+const setRole = (role: string): void => {
   if (typeof window !== "undefined") {
-    localStorage.setItem("refreshToken", token);
+    localStorage.setItem("role", role);
+  }
+};
+
+const getRole = (): string | null => {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("role");
+};
+
+const clearRole = (): void => {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("role");
   }
 };
 
 const clearTokens = (): void => {
   if (typeof window !== "undefined") {
     localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
   }
 };
 
 const redirectToLogin = (): void => {
   if (typeof window !== "undefined") {
     clearTokens();
-    window.location.href = "/login";
+    clearRole();
+    window.location.href = "/auth/login";
   }
 };
 
 const refreshAccessToken = async (): Promise<string | null> => {
-  const refreshToken = getRefreshToken();
-
-  if (!refreshToken) {
-    redirectToLogin();
-    return null;
-  }
-
   try {
-    const response = await axios.post<
-      ApiResponse<{ accessToken: string; refreshToken: string }>
-    >(
+    const response = await axios.post<ApiResponse<{ accessToken: string }>>(
       `${BASE_URL}/auth/refresh`,
-      { refreshToken },
-      { headers: { "Content-Type": "application/json" } },
+      {}, // Empty body - refresh token comes from httpOnly cookie
+      {
+        headers: { "Content-Type": "application/json" },
+        withCredentials: true, // Send cookies with request
+      },
     );
 
-    const accessToken = (response.data as { accessToken?: string }).accessToken;
-    const newRefreshToken = (response.data as { refreshToken?: string }).refreshToken;
+    const accessToken =
+      (response.data as { accessToken?: string }).accessToken ||
+      response.data.data?.accessToken;
 
     if (accessToken) {
       setAccessToken(accessToken);
-    }
-
-    if (newRefreshToken) {
-      setRefreshToken(newRefreshToken);
     }
 
     return accessToken || null;
@@ -194,4 +193,4 @@ export default apiClient;
 
 export type { ApiResponse, ApiError };
 
-export { setAccessToken, setRefreshToken, clearTokens };
+export { setAccessToken, clearTokens, setRole, getRole };
