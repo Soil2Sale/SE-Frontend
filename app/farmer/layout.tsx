@@ -24,7 +24,7 @@ export default function FarmerLayout({
 
   // TEMPORARY: Initialize with mock data for immediate display
   const [userProfile, setUserProfile] = useState<any>({
-    name: "Rajesh Kumar Patel",
+    name: "Kanha",
     id: "farmer-001",
   });
   const [farmerProfile, setFarmerProfile] = useState<any>({
@@ -75,7 +75,7 @@ export default function FarmerLayout({
           try {
             const locationName = await getLocationNameCached(
               farmerResp.data.location_latitude,
-              farmerResp.data.location_longitude
+              farmerResp.data.location_longitude,
             );
             setUserLocation(locationName);
             locationFetched = true;
@@ -88,12 +88,12 @@ export default function FarmerLayout({
         data: [],
       }));
       setNotifications(notifsResp?.data || []);
-    } catch (e) { }
+    } catch (e) {}
 
     // TEMPORARY: Use mock data if no user profile is available
     if (!userFetched) {
       setUserProfile({
-        name: "Rajesh Kumar Patel",
+        name: "Kanha",
         id: "farmer-001",
       });
     }

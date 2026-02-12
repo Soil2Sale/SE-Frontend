@@ -26,7 +26,7 @@ import {
 //     quality_grade: QualityGrade.PREMIUM,
 //     quantity_available: 500,
 //     expected_price: 45.5,
-//     farmer_profile: { name: "Rajesh Kumar" },
+//     farmer_profile: { name: "Kanha" },
 //   },
 //   {
 //     id: "2",
@@ -102,7 +102,12 @@ import {
 //   },
 // ];
 
-type SortOption = "price_asc" | "price_desc" | "weight_asc" | "weight_desc" | "none";
+type SortOption =
+  | "price_asc"
+  | "price_desc"
+  | "weight_asc"
+  | "weight_desc"
+  | "none";
 
 const getGradeColor = (grade: QualityGrade) => {
   switch (grade) {
@@ -329,7 +334,9 @@ export default function CropListingPage() {
 
                     <select
                       value={sortOption}
-                      onChange={(e) => setSortOption(e.target.value as SortOption)}
+                      onChange={(e) =>
+                        setSortOption(e.target.value as SortOption)
+                      }
                       className="bg-white/40 backdrop-blur-md border border-[#2a2a3e] rounded-lg px-4 py-3 text-[#1a4d2e] focus:outline-none focus:border-[#4ade80] transition-colors"
                     >
                       <option value="none">Sort By</option>
@@ -342,7 +349,9 @@ export default function CropListingPage() {
 
                   <div className="flex items-center gap-3">
                     <Filter className="w-5 h-5 text-[#4ade80]" />
-                    <span className="text-[#1a4d2e] font-semibold">Weight Range (kg):</span>
+                    <span className="text-[#1a4d2e] font-semibold">
+                      Weight Range (kg):
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -383,100 +392,102 @@ export default function CropListingPage() {
               </div>
             </div>
 
-          <AnimatePresence>
-            {showDetails && selectedCrop && (
-              <motion.div
-                initial={{ opacity: 0, x: 50, scale: 0.9 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: 50, scale: 0.9 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-                className="w-[40%] flex-shrink-0"
-              >
-                <div className="bg-gradient-to-br from-[#1a4d2e] to-[#0d2818] rounded-2xl p-6 border border-[#4ade80]/30 sticky top-8">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold text-white">
-                      Crop Details
-                    </h2>
-                    <button
-                      onClick={() => {
-                        setShowDetails(false);
-                        setTimeout(() => setSelectedCrop(null), 300);
-                      }}
-                      className="text-gray-400 hover:text-white transition-colors"
-                    >
-                      <X className="w-6 h-6" />
-                    </button>
-                  </div>
-
-                  <div className="space-y-6">
-                    <div className="bg-[#0a0a0f]/50 rounded-xl p-4 backdrop-blur-sm">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-[#4ade80] to-[#22c55e] rounded-lg flex items-center justify-center">
-                          <Sprout className="w-6 h-6 text-[#0d2818]" />
-                        </div>
-                        <h3 className="text-xl font-bold text-white">
-                          {selectedCrop.crop_name}
-                        </h3>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-3 text-gray-300">
-                          <Scale className="w-5 h-5 text-[#4ade80]" />
-                          <div>
-                            <div className="text-xs text-gray-400">
-                              Quality Grade
-                            </div>
-                            <div className="font-semibold">
-                              {selectedCrop.quality_grade}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 text-gray-300">
-                          <Package className="w-5 h-5 text-[#4ade80]" />
-                          <div>
-                            <div className="text-xs text-gray-400">
-                              Available Quantity
-                            </div>
-                            <div className="font-semibold">
-                              {selectedCrop.quantity} kg
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 text-gray-300">
-                          <DollarSign className="w-5 h-5 text-[#4ade80]" />
-                          <div>
-                            <div className="text-xs text-gray-400">
-                              Expected Price
-                            </div>
-                            <div className="font-semibold text-[#4ade80] text-xl">
-                              ₹{selectedCrop.expected_price}/kg
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 text-gray-300">
-                          <UserIcon className="w-5 h-5 text-[#4ade80]" />
-                          <div>
-                            <div className="text-xs text-gray-400">Farmer</div>
-                            <div className="font-semibold">
-                              {getFarmerName(selectedCrop)}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+            <AnimatePresence>
+              {showDetails && selectedCrop && (
+                <motion.div
+                  initial={{ opacity: 0, x: 50, scale: 0.9 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: 50, scale: 0.9 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className="w-[40%] flex-shrink-0"
+                >
+                  <div className="bg-gradient-to-br from-[#1a4d2e] to-[#0d2818] rounded-2xl p-6 border border-[#4ade80]/30 sticky top-8">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-2xl font-bold text-white">
+                        Crop Details
+                      </h2>
+                      <button
+                        onClick={() => {
+                          setShowDetails(false);
+                          setTimeout(() => setSelectedCrop(null), 300);
+                        }}
+                        className="text-gray-400 hover:text-white transition-colors"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
                     </div>
 
-                    <button className="w-full bg-gradient-to-r from-[#4ade80] to-[#22c55e] text-[#0d2818] font-bold py-3 rounded-lg hover:shadow-lg hover:shadow-[#4ade80]/50 transition-all duration-300">
-                      Contact Farmer
-                    </button>
+                    <div className="space-y-6">
+                      <div className="bg-[#0a0a0f]/50 rounded-xl p-4 backdrop-blur-sm">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-12 h-12 bg-gradient-to-br from-[#4ade80] to-[#22c55e] rounded-lg flex items-center justify-center">
+                            <Sprout className="w-6 h-6 text-[#0d2818]" />
+                          </div>
+                          <h3 className="text-xl font-bold text-white">
+                            {selectedCrop.crop_name}
+                          </h3>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-3 text-gray-300">
+                            <Scale className="w-5 h-5 text-[#4ade80]" />
+                            <div>
+                              <div className="text-xs text-gray-400">
+                                Quality Grade
+                              </div>
+                              <div className="font-semibold">
+                                {selectedCrop.quality_grade}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 text-gray-300">
+                            <Package className="w-5 h-5 text-[#4ade80]" />
+                            <div>
+                              <div className="text-xs text-gray-400">
+                                Available Quantity
+                              </div>
+                              <div className="font-semibold">
+                                {selectedCrop.quantity} kg
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 text-gray-300">
+                            <DollarSign className="w-5 h-5 text-[#4ade80]" />
+                            <div>
+                              <div className="text-xs text-gray-400">
+                                Expected Price
+                              </div>
+                              <div className="font-semibold text-[#4ade80] text-xl">
+                                ₹{selectedCrop.expected_price}/kg
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 text-gray-300">
+                            <UserIcon className="w-5 h-5 text-[#4ade80]" />
+                            <div>
+                              <div className="text-xs text-gray-400">
+                                Farmer
+                              </div>
+                              <div className="font-semibold">
+                                {getFarmerName(selectedCrop)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button className="w-full bg-gradient-to-r from-[#4ade80] to-[#22c55e] text-[#0d2818] font-bold py-3 rounded-lg hover:shadow-lg hover:shadow-[#4ade80]/50 transition-all duration-300">
+                        Contact Farmer
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         )}
       </div>
     </div>

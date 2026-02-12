@@ -70,7 +70,7 @@ export default function LoginPage() {
 
       setTimeout(() => {
         router.push(
-            `${role}/dashboard` ||
+            `/${role.toLocaleLowerCase()}/dashboard` ||
             "/farmer/dashboard",
         );
       }, 500);

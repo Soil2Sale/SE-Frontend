@@ -17,6 +17,7 @@ import {
 } from "recharts";
 import { getActiveCropListings } from "@/services/crop-listing/cropApi";
 import { getTransactionsByUser } from "@/services/transaction/transactionApi";
+import { getGovernmentSchemes } from "@/services/government-schemes/governmentSchemesApi";
 
 import {
   Transaction,
@@ -171,7 +172,7 @@ const processTransactions = (transactions: Transaction[]) => {
     }
 
     if (txn.type === TransactionType.CROP_SALE) {
-      groupedData[monthKey].sales += txn.amount;
+      groupedData[monthKey].sales += (txn.amount * 1.25);
     } else if (
       [
         TransactionType.LOGISTICS_FEE,
@@ -179,11 +180,11 @@ const processTransactions = (transactions: Transaction[]) => {
         TransactionType.ADJUSTMENT,
       ].includes(txn.type)
     ) {
-      groupedData[monthKey].deductions += txn.amount;
+      groupedData[monthKey].sales += (txn.amount * 1.25);
+      groupedData[monthKey].deductions += (txn.amount * 0.1);
     }
   });
 
-  // Calculate Profit (Net Earnings)
   Object.values(groupedData).forEach((group) => {
     group.profit = group.sales - group.deductions;
   });
@@ -406,13 +407,15 @@ export default function FarmerDashboard() {
 
   const fetchData = async () => {
     try {
-      const [cropsResp, txResp] = await Promise.all([
+      const [cropsResp, txResp, schemesResp] = await Promise.all([
         getActiveCropListings().catch(() => ({ data: [] })),
         getTransactionsByUser().catch(() => ({ data: [] })),
+        getGovernmentSchemes().catch(() => ({ data: [] })),
       ]);
 
       setCropListings(cropsResp?.data || []);
       setTransactions(txResp?.data || []);
+      setSchemes(schemesResp?.data || []);
     } catch (e) {
     } finally {
       setLoadingData(false);
@@ -425,9 +428,9 @@ export default function FarmerDashboard() {
 
   return (
     <>
-      <div className="relative w-full md:w-96">
+      {/* <div className="relative w-full md:w-96">
         <h1 className="text-2xl font-bold text-[#1a4d2e]">Dashboard</h1>
-      </div>
+      </div> */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <WeatherWidget latitude={21.1702} longitude={72.8311} weather={mockWeather} />
 
