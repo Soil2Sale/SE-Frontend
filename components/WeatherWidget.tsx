@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
     CloudSun,
     Droplets,
@@ -26,8 +26,66 @@ interface WeatherData {
 }
 
 interface WeatherWidgetProps {
-    location: string;
+    latitude: number;
+    longitude: number;
     weather: WeatherData;
+}
+
+// Location API functions (moved from services/location/locationApi.ts)
+const OPENWEATHER_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY || "";
+
+async function getLocationName(lat: number, lon: number): Promise<string> {
+    const fallbackLocation = "Mumbai, Maharashtra";
+
+    if (!OPENWEATHER_API_KEY) {
+        console.warn("OpenWeather API key not found. Using fallback location.");
+        return fallbackLocation;
+    }
+
+    try {
+        const response = await fetch(
+            `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${OPENWEATHER_API_KEY}`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (!data || data.length === 0) {
+            throw new Error("No location data found");
+        }
+
+        const location = data[0];
+
+        if (location.state) {
+            return `${location.name}, ${location.state}`;
+        } else {
+            return `${location.name}, ${location.country}`;
+        }
+    } catch (error) {
+        console.error("Error fetching location name:", error);
+        return fallbackLocation;
+    }
+}
+
+// Location cache
+const locationCache = new Map<string, { location: string; timestamp: number }>();
+const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
+
+async function getLocationNameCached(lat: number, lon: number): Promise<string> {
+    const cacheKey = `${lat.toFixed(4)},${lon.toFixed(4)}`;
+    const cached = locationCache.get(cacheKey);
+
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        return cached.location;
+    }
+
+    const location = await getLocationName(lat, lon);
+    locationCache.set(cacheKey, { location, timestamp: Date.now() });
+
+    return location;
 }
 
 function WeatherIcon({ condition }: { condition: string }) {
@@ -45,7 +103,24 @@ function WeatherIcon({ condition }: { condition: string }) {
     return <CloudSun className="w-16 h-16 text-[#fbbf24] drop-shadow-md" />;
 }
 
-export default function WeatherWidget({ location, weather }: WeatherWidgetProps) {
+export default function WeatherWidget({ latitude, longitude, weather }: WeatherWidgetProps) {
+    const [location, setLocation] = useState<string>("Surat");
+
+    useEffect(() => {
+        // Fetch location name from coordinates
+        const fetchLocation = async () => {
+            try {
+                const locationName = await getLocationNameCached(latitude, longitude);
+                setLocation(locationName);
+            } catch (error) {
+                console.error("Error fetching location:", error);
+                setLocation("Surat"); // Fallback to Surat
+            }
+        };
+
+        fetchLocation();
+    }, [latitude, longitude]);
+
     return (
         <div className="bg-gradient-to-br from-[#dcfce7] to-[#bbf7d0] rounded-3xl p-5 shadow-sm flex flex-col justify-between relative overflow-hidden h-full min-h-[220px]">
             {/* Top Row: Location & Temp Range */}

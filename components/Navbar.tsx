@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
 
 interface NavbarProps {
@@ -28,7 +29,12 @@ export default function Navbar({
     showNotifications = false,
     notificationIcon,
 }: NavbarProps) {
+    const router = useRouter();
     const unreadCount = notifications.filter((n) => !n.read).length;
+
+    const handleProfileClick = () => {
+        router.push("/farmer/profile");
+    };
 
     return (
         <header className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
@@ -51,16 +57,19 @@ export default function Navbar({
                     {showNotifications && notificationIcon}
                 </div>
 
-                <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl shadow-sm">
+                <button
+                    onClick={handleProfileClick}
+                    className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl shadow-sm hover:shadow-md hover:bg-gray-50 transition-all cursor-pointer"
+                >
                     <div className="h-10 w-10 rounded-full bg-[#1a4d2e] flex items-center justify-center text-white font-bold">
-                        {userName.charAt(0)}
+                        {userName ? userName.charAt(0) : "U"}
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-sm font-bold text-[#1a4d2e]">{userName}</span>
-                        <span className="text-xs text-gray-500">{userLocation}</span>
+                        <span className="text-sm font-bold text-[#1a4d2e]">{userName || "User"}</span>
+                        <span className="text-xs text-gray-500">{userLocation || "Location"}</span>
                     </div>
                     <div className="h-2 w-2 rounded-full bg-green-500 ml-2"></div>
-                </div>
+                </button>
             </div>
         </header>
     );
