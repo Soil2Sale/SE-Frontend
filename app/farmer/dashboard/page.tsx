@@ -429,7 +429,7 @@ export default function FarmerDashboard() {
         <h1 className="text-2xl font-bold text-[#1a4d2e]">Dashboard</h1>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <WeatherWidget location="Farmer Dashboard" weather={mockWeather} />
+        <WeatherWidget latitude={21.1702} longitude={72.8311} weather={mockWeather} />
 
         <div className="lg:col-span-2">
           <CropsOnSaleOverview listings={cropListings} />
