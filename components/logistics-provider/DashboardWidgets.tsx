@@ -1,6 +1,6 @@
 "use client";
 
-import { CloudSun, Star, Film } from "lucide-react";
+import { CloudSun, Star } from "lucide-react";
 import { motion } from "motion/react";
 
 export const WeatherWidget = () => {
@@ -8,7 +8,7 @@ export const WeatherWidget = () => {
         <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden"
+            className="h-full bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden"
         >
             <div className="absolute top-0 right-0 p-4 opacity-10">
                 <CloudSun size={80} />
@@ -35,7 +35,7 @@ export const RatingWidget = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col relative overflow-hidden"
+            className="h-full bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col relative overflow-hidden"
         >
             <h3 className="text-gray-500 text-sm font-medium mb-2">Driver Rating</h3>
             <div className="flex-1 flex flex-col items-center justify-center">
@@ -85,20 +85,16 @@ export const GifWidget = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white p-0 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center overflow-hidden relative group"
+            className="h-full bg-white p-0 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center overflow-hidden relative group"
         >
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent z-10" />
             <img
-                src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDdtY2J6ZnR4a3B5Z3B5Z3B5Z3B5Z3B5Z3B5Z3B5Z3B5Z3B5Z3B5/Lp5c7z8g5z8g5z8g/giphy.gif" // Placeholder gif, ideally user would provide one or I'd use a local asset. Using a safe solid color for now if image fails.
+                src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcHVpOGF2cjZjYWxxMHZ2Nm9peWR5ZGhibnd0aDBoOHhmbWlqZ3VlYyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/0T0FUiZl51VPCLsqLR/giphy.gif"
                 alt="Logistics Animation"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 style={{ backgroundColor: '#e5e7eb' }}
             />
-            {/* Fallback content if no gif */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-20 pointer-events-none">
-                <Film className="w-8 h-8 opacity-80 mb-2" />
-                <span className="text-xs font-medium bg-black/30 px-2 py-1 rounded-full backdrop-blur-sm">Live Feed</span>
-            </div>
+
         </motion.div>
     );
 };
