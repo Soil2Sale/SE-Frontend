@@ -1,25 +1,25 @@
-# 🧪 Detailed Unit & Integration Testing Report — Soil2Sale Frontend
+# Detailed Unit Testing Report — Soil2Sale Frontend
 
 **Date:** 2026-02-12
 **Framework:** Jest (Ts-Jest, React Testing Library)
 **Total Tests:** 18
-**Result:** ✅ 18 COMPLETED (0 Failed)
+**Result:** 18 COMPLETED (0 Failed)
 
 This report details every test case executed, explaining exactly **what it checks** and **why it's important**.
 
 ---
 
-## 1️⃣ Authentication Service (`services/auth/authApi.ts`)
+## 1 Authentication Service (`services/auth/authApi.ts`)
 These **Unit Tests** verify the core security functions in `auth.controller.js` by mocking the `apiClient`.
 
-### 🔐 Register & Login
+### Register & Login
 | Test Case | What It Checks | Why It Matters |
 |-----------|----------------|----------------|
 | `should register a new user successfully` | Verifies that valid registration data is sent to `/auth/register` and success response is returned. | Ensures new users can sign up without errors. |
 | `should throw error on registration failure` | Checks if the system validates errors correctly when registration inputs (like duplicate email) are rejected. | Prevents silent failures and informs user of issues. |
 | `should login user successfully` | Verifies that correct credentials invoke `/auth/login` and return user data. | Primary entry point for users to access the platform. |
 
-### 🛡️ Token Management
+### Token Management
 | Test Case | What It Checks | Why It Matters |
 |-----------|----------------|----------------|
 | `should verify OTP and store tokens` | Verifies that OTP submission stores `accessToken` and user role in local storage. | completing the 2FA loop is critical for secured access. |
@@ -28,17 +28,17 @@ These **Unit Tests** verify the core security functions in `auth.controller.js` 
 
 ---
 
-## 2️⃣ Crop Listing Service (`services/crop-listing/cropApi.ts`)
+## 2 Crop Listing Service (`services/crop-listing/cropApi.ts`)
 These **Integration Tests** verify the CRUD operations for the marketplace listings.
 
-### 🌾 Fetching Data
+### Fetching Data
 | Test Case | What It Checks | Why It Matters |
 |-----------|----------------|----------------|
 | `should fetch all crop listings` | Verifies `getAllCropListings` calls the correct endpoint `/crop-listings`. | Populates the main marketplace feed. |
 | `should fetch active crop listings` | Verifies `getActiveCropListings` fetches only available crops. | Buyers should only see crops that are currently for sale. |
 | `should fetch a single listing by ID` | Verifies `getCropListingById` calls specific resource endpoint. | Required for the "Product Details" page. |
 
-### ➕ Managing Listings
+### Managing Listings
 | Test Case | What It Checks | Why It Matters |
 |-----------|----------------|----------------|
 | `should create a new crop listing` | Verifies `createCropListing` sends the correct payload (name, quantity, price). | Allows farmers to add new stock to the marketplace. |
@@ -48,17 +48,17 @@ These **Integration Tests** verify the CRUD operations for the marketplace listi
 
 ---
 
-## 3️⃣ Weather Widget Component (`components/WeatherWidget.tsx`)
+## 3 Weather Widget Component (`components/WeatherWidget.tsx`)
 These **Component Tests** verify the UI logic for the dashboard weather card using `React Testing Library`.
 
-### ☀️ Visual Rendering
+### Visual Rendering
 | Test Case | What It Checks | Why It Matters |
 |-----------|----------------|----------------|
 | `renders location and temperature` | Verifies that the city name and current temp are visible. | Basic validation that the widget is working. |
 | `renders condition icon based on weather condition` | Checks if the correct icon (e.g., Rain Cloud) renders for "Rainy" weather. | Visual cues allow farmers to quickly assess weather. |
 | `displays humidity and wind speed` | Verifies specific data points (Humidity %, Wind km/h) are shown. | Critical farming metrics for irrigation and spraying. |
 
-### ⚠️ Alerts & Predictions
+### Alerts & Predictions
 | Test Case | What It Checks | Why It Matters |
 |-----------|----------------|----------------|
 | `shows UV Index warning when high` | Checks if "High" warning appears when UV index is 7+. | **Safety:** Protects farmers from dangerous sun exposure. |
@@ -66,7 +66,7 @@ These **Component Tests** verify the UI logic for the dashboard weather card usi
 
 ---
 
-## 📊 Summary Statistics
+## Summary Statistics
 - **Total Tests:** 18
 - **Passed:** 18
 - **Failed:** 0
