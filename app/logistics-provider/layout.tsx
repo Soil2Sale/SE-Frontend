@@ -135,7 +135,7 @@ export default function LogisticsProviderLayout({
                     key={n.id}
                     className={`p-4 border-b border-gray-50 hover:bg-gray-50 cursor-pointer flex gap-3 ${!n.read_at ? "bg-blue-50/30" : ""}`}
                   >
-                    <div className="flex-shrink-0 mt-1">
+                    <div className="shrink-0 mt-1">
                       {getNotificationIcon(String(n.notification_type || ""))}
                     </div>
                     <div>
