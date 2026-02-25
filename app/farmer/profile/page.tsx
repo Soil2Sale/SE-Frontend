@@ -208,15 +208,6 @@ export default function FarmerProfilePage() {
   // If yieldHistory is empty, fallback to empty array
   const yieldHistoryData = yieldHistory.length > 0 ? yieldHistory : [];
 
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
   // Scroll to section
   const scrollToSection = (sectionId: SectionId) => {
     setActiveSection(sectionId);
@@ -257,7 +248,7 @@ export default function FarmerProfilePage() {
               </div>
 
               {/* Quick Stats Grid */}
-              <div className="grid grid-cols-2 gap-4 mb-6 pb-6 border-b border-gray-100">
+              {/* <div className="grid grid-cols-2 gap-4 mb-6 pb-6 border-b border-gray-100">
                 <div className="p-4 bg-gray-50 rounded-2xl text-center">
                   <span className="text-xs font-medium text-gray-500 block mb-1">
                     Crops
@@ -293,7 +284,7 @@ export default function FarmerProfilePage() {
                     <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
                   </p>
                 </div>
-              </div>
+              </div> */}
 
               {/* Navigation */}
               <nav className="space-y-1">
@@ -319,11 +310,11 @@ export default function FarmerProfilePage() {
                     icon: Wallet,
                   },
                   { id: "ratings" as SectionId, label: "Ratings", icon: Star },
-                  {
-                    id: "documents" as SectionId,
-                    label: "Documents",
-                    icon: FileText,
-                  },
+                  // {
+                  //   id: "documents" as SectionId,
+                  //   label: "Documents",
+                  //   icon: FileText,
+                  // },
                   {
                     id: "settings" as SectionId,
                     label: "Settings",
@@ -726,7 +717,7 @@ export default function FarmerProfilePage() {
                       <Wallet className="w-5 h-5 text-white/80" />
                     </div>
                     <p className="text-3xl font-bold text-white">
-                      {formatCurrency(wallet.balance)}
+                      {(wallet.balance)}
                     </p>
                   </div>
                   <div className="p-6 bg-linear-to-br from-[#1a4d2e] to-[#166534] rounded-xl shadow-lg">
@@ -737,7 +728,7 @@ export default function FarmerProfilePage() {
                       <TrendingUp className="w-5 h-5 text-white/80" />
                     </div>
                     <p className="text-3xl font-bold text-white">
-                      {formatCurrency(transactionSummary.total_sales)}
+                      {(transactionSummary.total_sales)}
                     </p>
                   </div>
                   <div className="p-6 bg-linear-to-br from-yellow-400 to-yellow-500 rounded-xl shadow-lg">
@@ -748,7 +739,7 @@ export default function FarmerProfilePage() {
                       <Award className="w-5 h-5 text-white/80" />
                     </div>
                     <p className="text-3xl font-bold text-white">
-                      {formatCurrency(transactionSummary.net_earnings)}
+                      {(transactionSummary.net_earnings)}
                     </p>
                   </div>
                 </div>

@@ -271,7 +271,7 @@ export default function SchemesPage() {
                             </span>
                           </div>
 
-                          <button className="bg-[#1a4d2e] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#15401f] transition-colors flex items-center gap-2">
+                          <button className="bg-[#1a4d2e] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#15401f] transition-colors flex items-center gap-2" onClick={() => window.location.href = `https://subhadra.odisha.gov.in/`}>
                             View Details
                             <ExternalLink className="w-4 h-4" />
                           </button>
