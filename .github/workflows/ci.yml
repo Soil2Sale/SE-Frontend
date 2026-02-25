@@ -28,3 +28,6 @@ jobs:
 
     - name: Run NPM Audit (Security Checks)
       run: npm audit --audit-level=high
+
+    - name: Verify Build
+      run: npm run build
