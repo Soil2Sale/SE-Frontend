@@ -26,29 +26,29 @@ import {
 
 const FAQ_ITEMS = [
   {
-    question: "How do I update shipment status?",
+    question: "How do I place an order?",
     answer:
-      "Navigate to the Shipments page, select a shipment, and use the status dropdown to update. You can mark shipments as Dispatched, In Transit, or Delivered.",
+      "Browse available crops, select the desired item, and click 'Buy Now'. Follow the checkout process to complete your purchase.",
   },
   {
-    question: "How do I add a new vehicle?",
+    question: "How can I track my order?",
     answer:
-      "Go to Fleet & Storage, select the Vehicles tab, and click 'Add Vehicle'. Fill in the vehicle type, capacity, and availability status.",
+      "Go to the 'Orders' section in your profile. Click on an order to view its status and shipment tracking details.",
   },
   {
-    question: "What is the tracking code?",
+    question: "What payment methods are accepted?",
     answer:
-      "The tracking code is a unique identifier assigned to each shipment. Share it with customers so they can track their orders on the Tracking page.",
+      "We accept UPI, credit/debit cards, net banking, and select wallet options. Choose your preferred method during checkout.",
   },
   {
-    question: "How do I manage storage facilities?",
+    question: "How do I contact support?",
     answer:
-      "In Fleet & Storage, switch to the Storage tab. You can add new facilities with location, capacity, and pricing details.",
+      "Click the 'Support' link in the sidebar or footer. You can chat with our team or raise a ticket for any issue.",
   },
   {
-    question: "What should I do if there's a dispute?",
+    question: "What should I do if my order is delayed or incorrect?",
     answer:
-      "Visit your Profile > Disputes page to view and manage any disputes. You can provide evidence and communicate with the admin team.",
+      "Go to 'Orders', select the affected order, and click 'Report Issue'. Our support team will assist you promptly.",
   },
 ];
 
