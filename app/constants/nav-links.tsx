@@ -49,11 +49,11 @@ export const NAV_LINKS: Record<string, NavLink[]> = {
       href: "/farmer/guidance",
       icon: <Book className="w-5 h-5" />,
     },
-    {
-      label: "AI Insights",
-      href: "/farmer/ai-insights",
-      icon: <Lightbulb className="w-5 h-5" />,
-    },
+    // {
+    //   label: "AI Insights",
+    //   href: "/farmer/ai-insights",
+    //   icon: <Lightbulb className="w-5 h-5" />,
+    // },
     {
       label: "Schemes",
       href: "/farmer/schemes",
