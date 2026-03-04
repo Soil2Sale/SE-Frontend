@@ -3,6 +3,7 @@ import axios, {
   AxiosError,
   InternalAxiosRequestConfig,
   AxiosResponse,
+  AxiosRequestConfig,
 } from "axios";
 import { config } from "process";
 
@@ -21,6 +22,35 @@ interface ApiError {
 }
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
+const FRONTEND_ONLY_MODE =
+  process.env.NEXT_PUBLIC_FRONTEND_ONLY_MODE !== "false";
+
+const buildFrontendOnlyData = (requestConfig: AxiosRequestConfig) => {
+  const url = requestConfig.url || "";
+  const method = (requestConfig.method || "get").toLowerCase();
+
+  if (url.includes("/users/profile")) {
+    return {
+      success: true,
+      data: {
+        id: "demo-user-001",
+        name: "Demo User",
+        email: "demo@soil2sale.local",
+        role: "Farmer",
+      },
+    };
+  }
+
+  if (url.includes("/notifications")) {
+    return { success: true, data: [] };
+  }
+
+  if (method === "get") {
+    return { success: true, data: [] };
+  }
+
+  return { success: true, data: {} };
+};
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -29,6 +59,19 @@ const apiClient: AxiosInstance = axios.create({
   },
   timeout: 10000,
   withCredentials: true, // Enable sending cookies with requests
+  ...(FRONTEND_ONLY_MODE
+    ? {
+        adapter: async (requestConfig) => {
+          return {
+            data: buildFrontendOnlyData(requestConfig),
+            status: 200,
+            statusText: "OK",
+            headers: {},
+            config: requestConfig,
+          };
+        },
+      }
+    : {}),
 });
 
 let isRefreshing = false;
@@ -69,6 +112,10 @@ const clearTokens = (): void => {
 };
 
 const redirectToLogin = (): void => {
+  if (FRONTEND_ONLY_MODE) {
+    return;
+  }
+
   if (typeof window !== "undefined") {
     clearTokens();
     clearRole();
@@ -77,6 +124,10 @@ const redirectToLogin = (): void => {
 };
 
 const refreshAccessToken = async (): Promise<string | null> => {
+  if (FRONTEND_ONLY_MODE) {
+    return null;
+  }
+
   try {
     const response = await axios.post<ApiResponse<{ accessToken: string }>>(
       `${BASE_URL}/auth/refresh`,
@@ -113,6 +164,10 @@ const publicRoutes = [
 
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    if (FRONTEND_ONLY_MODE) {
+      return config;
+    }
+
     const isPublicRoute = publicRoutes.some((route) =>
       config.url?.includes(route),
     );
@@ -146,6 +201,12 @@ apiClient.interceptors.response.use(
     };
   },
   async (error: AxiosError<ApiError>) => {
+    if (FRONTEND_ONLY_MODE) {
+      return Promise.resolve({
+        data: { success: true, data: [] },
+      } as AxiosResponse<ApiResponse>);
+    }
+
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };

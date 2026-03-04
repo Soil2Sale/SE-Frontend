@@ -1,12 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
-import { getProfile } from "@/services/user/userApi";
-import { getNotificationsByUser } from "@/services/notification/notificationApi";
-import { getRole } from "@/services/apiClient";
 import { Leaf, Sprout, Truck, AlertTriangle, Bell } from "lucide-react";
 
 export default function LogisticsProviderLayout({
@@ -14,45 +10,18 @@ export default function LogisticsProviderLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [userProfile] = useState<any>({
+    name: "Demo Logistics Provider",
+    email: "logistics@soil2sale.local",
+  });
 
   useEffect(() => {
-    const accessToken = localStorage.getItem("accessToken");
-    const role = getRole();
-
-    if (!accessToken) {
-      router.push("/");
-      return;
-    }
-
-    if (role && role !== "Logistics Provider" && role !== "Admin") {
-      router.push("/");
-      return;
-    }
-
-    setIsAuthenticated(true);
-    fetchData();
+    setNotifications([]);
     setIsLoading(false);
-  }, [router]);
-
-  const fetchData = async () => {
-    try {
-      const profileResp = await getProfile();
-      const user = profileResp?.data || null;
-      if (user) {
-        setUserProfile(user);
-      }
-      const notifsResp = await getNotificationsByUser().catch(() => ({
-        data: [],
-      }));
-      setNotifications(notifsResp?.data || []);
-    } catch (e) {}
-  };
+  }, []);
 
   const navbarNotifications = notifications.map((n) => ({
     id: n.id,
@@ -104,10 +73,6 @@ export default function LogisticsProviderLayout({
         <div className="text-white text-xl">Loading...</div>
       </div>
     );
-  }
-
-  if (!isAuthenticated) {
-    return null;
   }
 
   return (

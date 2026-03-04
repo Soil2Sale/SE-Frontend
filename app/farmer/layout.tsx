@@ -1,14 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
-import { getProfile } from "@/services/user/userApi";
-import { getFarmerProfileByUserId } from "@/services/farmer/farmerProfileApi";
-import { getNotificationsByUser } from "@/services/notification/notificationApi";
-import { getRole } from "@/services/apiClient";
-import { getLocationNameCached } from "@/services/location/locationApi";
 import { Leaf, Sprout, Truck, AlertTriangle, Bell } from "lucide-react";
 
 export default function FarmerLayout({
@@ -16,8 +10,6 @@ export default function FarmerLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -34,86 +26,18 @@ export default function FarmerLayout({
   const [userLocation, setUserLocation] = useState<string>("Surat");
 
   useEffect(() => {
-    // Authentication check for farmer dashboard and profile
-    const accessToken = localStorage.getItem("accessToken");
-    const role = getRole();
-
-    if (!accessToken) {
-      router.push("/");
-      return;
-    }
-
-    if (role && role !== "Farmer" && role !== "Admin") {
-      router.push("/");
-      return;
-    }
-
-    setIsAuthenticated(true);
-    fetchData();
+    setNotifications([]);
+    setUserProfile({
+      name: "Kanha",
+      id: "farmer-001",
+    });
+    setFarmerProfile({
+      location_latitude: 21.1702,
+      location_longitude: 72.8311,
+    });
+    setUserLocation("Surat");
     setIsLoading(false);
-  }, [router]);
-
-  const fetchData = async () => {
-    let userFetched = false;
-    let farmerFetched = false;
-    let locationFetched = false;
-
-    try {
-      const profileResp = await getProfile();
-      const user = profileResp?.data || null;
-      if (user) {
-        setUserProfile(user);
-        userFetched = true;
-        const farmerResp = await getFarmerProfileByUserId(user.id).catch(
-          () => ({ data: null }),
-        );
-        if (farmerResp?.data) {
-          setFarmerProfile(farmerResp.data);
-          farmerFetched = true;
-
-          // Fetch human-readable location name from coordinates
-          try {
-            const locationName = await getLocationNameCached(
-              farmerResp.data.location_latitude,
-              farmerResp.data.location_longitude,
-            );
-            setUserLocation(locationName);
-            locationFetched = true;
-          } catch (e) {
-            console.error("Error fetching location name:", e);
-          }
-        }
-      }
-      const notifsResp = await getNotificationsByUser().catch(() => ({
-        data: [],
-      }));
-      setNotifications(notifsResp?.data || []);
-    } catch (e) {}
-
-    // TEMPORARY: Use mock data if no user profile is available
-    if (!userFetched) {
-      setUserProfile({
-        name: "Kanha",
-        id: "farmer-001",
-      });
-    }
-    if (!farmerFetched) {
-      setFarmerProfile({
-        location_latitude: 21.1702,
-        location_longitude: 72.8311,
-      });
-    }
-
-    // Fetch location for mock data if not already fetched
-    if (!locationFetched) {
-      try {
-        const locationName = await getLocationNameCached(21.1702, 72.8311);
-        setUserLocation(locationName);
-      } catch (e) {
-        setUserLocation("Surat");
-      }
-    }
-  };
+  }, []);
 
   const navbarNotifications = notifications.map((n) => ({
     id: n.id,
@@ -165,10 +89,6 @@ export default function FarmerLayout({
         <div className="text-white text-xl">Loading...</div>
       </div>
     );
-  }
-
-  if (!isAuthenticated) {
-    return null;
   }
 
   return (
