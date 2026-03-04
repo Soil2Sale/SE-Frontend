@@ -9,7 +9,8 @@ import {
   markAllNotificationsAsRead,
   deleteNotification,
 } from "@/services/shipment/shipmentApi";
-import { Notification, NotificationType } from "@/types/shipment.types";
+import { Notification } from "@/types/shipment.types";
+import { NotificationType } from "@/types/dashboard.types";
 import {
   HelpCircle,
   Bell,
@@ -26,33 +27,46 @@ import {
 
 const FAQ_ITEMS = [
   {
-    question: "How do I update shipment status?",
+    question: "How do I place an order?",
     answer:
-      "Navigate to the Shipments page, select a shipment, and use the status dropdown to update. You can mark shipments as Dispatched, In Transit, or Delivered.",
+      "Browse available crops, select the desired item, and click 'Buy Now'. Follow the checkout process to complete your purchase.",
   },
   {
-    question: "How do I add a new vehicle?",
+    question: "How can I track my order?",
     answer:
-      "Go to Fleet & Storage, select the Vehicles tab, and click 'Add Vehicle'. Fill in the vehicle type, capacity, and availability status.",
+      "Go to the 'Orders' section in your profile. Click on an order to view its status and shipment tracking details.",
   },
   {
-    question: "What is the tracking code?",
+    question: "What payment methods are accepted?",
     answer:
-      "The tracking code is a unique identifier assigned to each shipment. Share it with customers so they can track their orders on the Tracking page.",
+      "We accept UPI, credit/debit cards, net banking, and select wallet options. Choose your preferred method during checkout.",
   },
   {
-    question: "How do I manage storage facilities?",
+    question: "How do I contact support?",
     answer:
-      "In Fleet & Storage, switch to the Storage tab. You can add new facilities with location, capacity, and pricing details.",
+      "Click the 'Support' link in the sidebar or footer. You can chat with our team or raise a ticket for any issue.",
   },
   {
-    question: "What should I do if there's a dispute?",
+    question: "What should I do if my order is delayed or incorrect?",
     answer:
-      "Visit your Profile > Disputes page to view and manage any disputes. You can provide evidence and communicate with the admin team.",
+      "Go to 'Orders', select the affected order, and click 'Report Issue'. Our support team will assist you promptly.",
   },
 ];
 
 export default function SupportPage() {
+  // Map legacy shipment notification types to new dashboard types
+  const mapNotificationType = (type: string): NotificationType => {
+    switch (type) {
+      case "ORDER":
+        return NotificationType.ORDER_UPDATE;
+      case "SHIPMENT":
+        return NotificationType.LOGISTICS_UPDATE;
+      case "SYSTEM":
+        return NotificationType.SYSTEM_ALERT;
+      default:
+        return NotificationType.SYSTEM_ALERT;
+    }
+  };
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
@@ -108,12 +122,22 @@ export default function SupportPage() {
 
   const getNotificationIcon = (type: NotificationType) => {
     switch (type) {
-      case NotificationType.ORDER:
+      case NotificationType.ORDER_UPDATE:
         return <Package className="w-5 h-5" />;
-      case NotificationType.SHIPMENT:
+      case NotificationType.PAYMENT_UPDATE:
+        return <Check className="w-5 h-5" />;
+      case NotificationType.LOGISTICS_UPDATE:
         return <Truck className="w-5 h-5" />;
-      case NotificationType.SYSTEM:
+      case NotificationType.DISPUTE_UPDATE:
         return <AlertCircle className="w-5 h-5" />;
+      case NotificationType.SCHEME_ALERT:
+        return <FileText className="w-5 h-5" />;
+      case NotificationType.AI_INSIGHT:
+        return <Shield className="w-5 h-5" />;
+      case NotificationType.BNPL_UPDATE:
+        return <MessageCircle className="w-5 h-5" />;
+      case NotificationType.SYSTEM_ALERT:
+        return <Bell className="w-5 h-5" />;
       default:
         return <Bell className="w-5 h-5" />;
     }
@@ -121,11 +145,21 @@ export default function SupportPage() {
 
   const getNotificationColor = (type: NotificationType) => {
     switch (type) {
-      case NotificationType.ORDER:
+      case NotificationType.ORDER_UPDATE:
         return "from-blue-500 to-blue-600";
-      case NotificationType.SHIPMENT:
+      case NotificationType.PAYMENT_UPDATE:
+        return "from-yellow-500 to-yellow-600";
+      case NotificationType.LOGISTICS_UPDATE:
         return "from-green-500 to-green-600";
-      case NotificationType.SYSTEM:
+      case NotificationType.DISPUTE_UPDATE:
+        return "from-pink-500 to-pink-600";
+      case NotificationType.SCHEME_ALERT:
+        return "from-lime-500 to-lime-600";
+      case NotificationType.AI_INSIGHT:
+        return "from-indigo-500 to-indigo-600";
+      case NotificationType.BNPL_UPDATE:
+        return "from-purple-500 to-purple-600";
+      case NotificationType.SYSTEM_ALERT:
         return "from-red-500 to-red-600";
       default:
         return "from-gray-500 to-gray-600";
@@ -268,7 +302,7 @@ export default function SupportPage() {
 
           {/* Right: Notifications */}
           <div className="space-y-6">
-            <div className="bg-gradient-to-br from-[#dcfce7] to-[#bbf7d0] rounded-2xl p-6 shadow-lg border border-[#4ade80]/50">
+            <div className="bg-linear-to-br from-[#dcfce7] to-[#bbf7d0] rounded-2xl p-6 shadow-lg border border-[#4ade80]/50">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold light-theme-font flex items-center gap-2">
                   <Bell className="w-6 h-6 text-[#4ade80]" />
@@ -290,11 +324,30 @@ export default function SupportPage() {
                   className="w-full bg-white/40 backdrop-blur-md border border-[#2a2a3e] rounded-lg px-4 py-2 text-[#1a4d2e] focus:outline-none focus:border-[#4ade80]"
                 >
                   <option value="ALL">All Types</option>
-                  <option value={NotificationType.ORDER}>Order Updates</option>
-                  <option value={NotificationType.SHIPMENT}>
-                    Shipment Updates
+                  <option value={NotificationType.ORDER_UPDATE}>
+                    Order Updates
                   </option>
-                  <option value={NotificationType.SYSTEM}>System Alerts</option>
+                  <option value={NotificationType.PAYMENT_UPDATE}>
+                    Payment Updates
+                  </option>
+                  <option value={NotificationType.LOGISTICS_UPDATE}>
+                    Logistics Updates
+                  </option>
+                  <option value={NotificationType.DISPUTE_UPDATE}>
+                    Dispute Updates
+                  </option>
+                  <option value={NotificationType.SCHEME_ALERT}>
+                    Scheme Alerts
+                  </option>
+                  <option value={NotificationType.AI_INSIGHT}>
+                    AI Insights
+                  </option>
+                  <option value={NotificationType.BNPL_UPDATE}>
+                    BNPL Updates
+                  </option>
+                  <option value={NotificationType.SYSTEM_ALERT}>
+                    System Alerts
+                  </option>
                 </select>
 
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -324,7 +377,7 @@ export default function SupportPage() {
                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#4ade80] mx-auto"></div>
                 </div>
               ) : notifications.length > 0 ? (
-                <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+                <div className="space-y-3 max-h-150 overflow-y-auto pr-2">
                   {notifications.map((notification) => (
                     <div
                       key={notification.id}
@@ -336,9 +389,11 @@ export default function SupportPage() {
                     >
                       <div className="flex items-start gap-3">
                         <div
-                          className={`w-10 h-10 rounded-lg bg-gradient-to-br ${getNotificationColor(notification.notification_type)} flex items-center justify-center text-white flex-shrink-0`}
+                          className={`w-10 h-10 rounded-lg bg-linear-to-br ${getNotificationColor(mapNotificationType(notification.notification_type))} flex items-center justify-center text-white shrink-0`}
                         >
-                          {getNotificationIcon(notification.notification_type)}
+                          {getNotificationIcon(
+                            mapNotificationType(notification.notification_type),
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-[#1a4d2e] leading-snug mb-1">
@@ -348,7 +403,7 @@ export default function SupportPage() {
                             {new Date(notification.sent_at).toLocaleString()}
                           </p>
                         </div>
-                        <div className="flex gap-1 flex-shrink-0">
+                        <div className="flex gap-1 shrink-0">
                           {!notification.read_at && (
                             <button
                               onClick={() => handleMarkAsRead(notification.id)}

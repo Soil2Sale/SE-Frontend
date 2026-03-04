@@ -151,7 +151,7 @@ export default function MarketplacePage() {
             </div>
           </div>
           <h3 className="text-gray-600 text-sm font-medium mb-1">Avg. Price / kg</h3>
-          <p className="text-3xl font-bold text-[#1a4d2e]">{(avgPrice)}</p>
+          <p className="text-3xl font-bold text-[#1a4d2e]">{(avgPrice.toFixed(2))}</p>
         </div>
 
         <div className="bg-white rounded-3xl p-6 shadow-sm">
