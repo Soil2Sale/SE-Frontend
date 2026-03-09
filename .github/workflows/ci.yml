@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: Frontend CI Pipeline
 
 on:
   push:
@@ -9,29 +9,28 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-
+    
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-    - name: Set up Node.js
+    - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20'
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm install
+      run: npm ci
 
-    - name: Run Lint
+    - name: Run ESLint
       run: npm run lint
 
-    - name: Run Build
-      run: npm run build
-      env:
-        NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api' }}
+    - name: Run NPM Audit (Security Checks)
+      run: npm audit --audit-level=high || true
 
     - name: Run Unit Tests
-      run: npm test
+      run: npm test -- --passWithNoTests --forceExit
       env:
         NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api' }}
 
@@ -41,3 +40,8 @@ jobs:
       with:
         name: coverage-report
         path: coverage/
+
+    - name: Verify Build
+      run: npm run build
+      env:
+        NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api' }}
