@@ -1,14 +1,16 @@
 import apiClient from "../apiClient";
 
 export interface MarketPrice {
+  _id: string;
   id: string;
   crop_name: string;
-  current_price: number;
-  previous_price: number;
-  market_name: string;
+  price: number;
+  recorded_date: string;
+  price_type: string;
+  market_type: string;
+  market_location: string;
   state: string;
-  updated_at: string;
-  unit: string;
+  created_at: string;
 }
 
 export interface GetMarketPricesParams {

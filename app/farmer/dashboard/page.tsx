@@ -253,15 +253,6 @@ function CropsOnSaleOverview({ listings }: { listings: CropListingCT[] }) {
     })
     .filter((d) => d.value > 0);
 
-  // Format currency
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(val);
-  };
-
   return (
     <div className="bg-white rounded-3xl p-6 shadow-sm flex flex-col md:flex-row gap-8">
       {/* LEFT: Primary Metric & Market Movement */}
@@ -272,7 +263,7 @@ function CropsOnSaleOverview({ listings }: { listings: CropListingCT[] }) {
             Money Expected From Crops on Sale
           </h3>
           <div className="text-5xl font-bold text-[#1a4d2e] mb-2">
-            {formatCurrency(totalExpectedValue)}
+            {(totalExpectedValue)}
           </div>
           <p className="text-sm text-gray-500 flex items-center gap-2">
             <span className="font-bold text-[#1a4d2e]">
@@ -588,7 +579,7 @@ export default function FarmerDashboard() {
                     <span className="text-xs text-green-200 font-medium">
                       Deadline: {scheme.deadline}
                     </span>
-                    <button className="bg-[#4ade80] text-[#1a4d2e] px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#4ade80]/90 transition-colors flex items-center gap-1 shadow-sm">
+                    <button className="bg-[#4ade80] text-[#1a4d2e] px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#4ade80]/90 transition-colors flex items-center gap-1 shadow-sm" onClick={() => window.location.href = `https://subhadra.odisha.gov.in/`}>
                       View Details
                     </button>
                   </div>

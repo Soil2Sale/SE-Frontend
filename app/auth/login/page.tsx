@@ -69,10 +69,14 @@ export default function LoginPage() {
       const role = response.data.user?.role || "user";
 
       setTimeout(() => {
-        router.push(
-            `/${role.toLocaleLowerCase()}/dashboard` ||
-            "/farmer/dashboard",
-        );
+        if (role.toLocaleLowerCase() === "buyer") {
+          router.push("/buyer/marketplace");
+        }else {
+          router.push(
+              `/${role.toLocaleLowerCase()}/dashboard` ||
+              "/farmer/dashboard",
+          );
+        }
       }, 500);
     } catch (err: any) {
       setError(err.message || "Login failed. Please try again.");

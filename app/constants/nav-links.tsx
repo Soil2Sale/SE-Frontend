@@ -44,11 +44,11 @@ export const NAV_LINKS: Record<string, NavLink[]> = {
       href: "/farmer/market-prices",
       icon: <LineChart className="w-5 h-5" />,
     },
-    {
-      label: "Guidance",
-      href: "/farmer/guidance",
-      icon: <Book className="w-5 h-5" />,
-    },
+    // {
+    //   label: "Guidance",
+    //   href: "/farmer/guidance",
+    //   icon: <Book className="w-5 h-5" />,
+    // },
     // {
     //   label: "AI Insights",
     //   href: "/farmer/ai-insights",
@@ -67,11 +67,11 @@ export const NAV_LINKS: Record<string, NavLink[]> = {
   ],
 
   Buyer: [
-    {
-      label: "Dashboard",
-      href: "/buyer/dashboard",
-      icon: <Home className="w-5 h-5" />,
-    },
+    // {
+    //   label: "Dashboard",
+    //   href: "/buyer/dashboard",
+    //   icon: <Home className="w-5 h-5" />,
+    // },
     {
       label: "Marketplace",
       href: "/buyer/marketplace",
