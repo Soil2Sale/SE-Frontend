@@ -8,6 +8,7 @@ import { getProfile } from "@/services/user/userApi";
 import { getNotificationsByUser } from "@/services/notification/notificationApi";
 import { getRole } from "@/services/apiClient";
 import { Leaf, Sprout, Truck, AlertTriangle, Bell } from "lucide-react";
+import { NotificationType } from "@/types/dashboard.types";
 
 export default function FinancialPartnerLayout({
   children,
@@ -56,46 +57,69 @@ export default function FinancialPartnerLayout({
 
   const navbarNotifications = notifications.map((n) => ({
     id: n.id,
-    type: String(n.notification_type || ""),
+    type: n.notification_type as NotificationType,
     message: n.message,
     time: n.sent_at || "",
     read: !!n.read_at,
   }));
 
-  const getNotificationIcon = (type: string) => {
-    if (
-      type.toLowerCase().includes("ai") ||
-      type.toLowerCase().includes("insight")
-    ) {
-      return (
-        <div className="p-2 bg-blue-100 rounded-full text-blue-600">
-          <Leaf className="w-4 h-4" />
-        </div>
-      );
-    } else if (type.toLowerCase().includes("scheme")) {
-      return (
-        <div className="p-2 bg-green-100 rounded-full text-green-600">
-          <Sprout className="w-4 h-4" />
-        </div>
-      );
-    } else if (type.toLowerCase().includes("order")) {
-      return (
-        <div className="p-2 bg-orange-100 rounded-full text-orange-600">
-          <Truck className="w-4 h-4" />
-        </div>
-      );
-    } else if (type.toLowerCase().includes("system")) {
-      return (
-        <div className="p-2 bg-red-100 rounded-full text-red-600">
-          <AlertTriangle className="w-4 h-4" />
-        </div>
-      );
+  const getNotificationIcon = (type: NotificationType | string) => {
+    switch (type) {
+      case NotificationType.ORDER_UPDATE:
+        return (
+          <div className="p-2 bg-orange-100 rounded-full text-orange-600">
+            <Truck className="w-4 h-4" />
+          </div>
+        );
+      case NotificationType.PAYMENT_UPDATE:
+        return (
+          <div className="p-2 bg-yellow-100 rounded-full text-yellow-600">
+            <Bell className="w-4 h-4" />
+          </div>
+        );
+      case NotificationType.LOGISTICS_UPDATE:
+        return (
+          <div className="p-2 bg-blue-100 rounded-full text-blue-600">
+            <Truck className="w-4 h-4" />
+          </div>
+        );
+      case NotificationType.DISPUTE_UPDATE:
+        return (
+          <div className="p-2 bg-pink-100 rounded-full text-pink-600">
+            <AlertTriangle className="w-4 h-4" />
+          </div>
+        );
+      case NotificationType.SCHEME_ALERT:
+        return (
+          <div className="p-2 bg-green-100 rounded-full text-green-600">
+            <Sprout className="w-4 h-4" />
+          </div>
+        );
+      case NotificationType.AI_INSIGHT:
+        return (
+          <div className="p-2 bg-blue-100 rounded-full text-blue-600">
+            <Leaf className="w-4 h-4" />
+          </div>
+        );
+      case NotificationType.BNPL_UPDATE:
+        return (
+          <div className="p-2 bg-purple-100 rounded-full text-purple-600">
+            <Bell className="w-4 h-4" />
+          </div>
+        );
+      case NotificationType.SYSTEM_ALERT:
+        return (
+          <div className="p-2 bg-red-100 rounded-full text-red-600">
+            <AlertTriangle className="w-4 h-4" />
+          </div>
+        );
+      default:
+        return (
+          <div className="p-2 bg-gray-100 rounded-full text-gray-600">
+            <Bell className="w-4 h-4" />
+          </div>
+        );
     }
-    return (
-      <div className="p-2 bg-gray-100 rounded-full text-gray-600">
-        <Bell className="w-4 h-4" />
-      </div>
-    );
   };
 
   if (isLoading) {
@@ -125,9 +149,7 @@ export default function FinancialPartnerLayout({
             <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
               <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-[#f8faf9]">
                 <h3 className="font-bold text-[#1a4d2e]">Notifications</h3>
-                <button className="text-xs text-blue-600 hover:underline">
-                  Mark all read
-                </button>
+                <button className="text-xs text-blue-600 hover:underline"></button>
               </div>
               <div className="max-h-80 overflow-y-auto">
                 {notifications.map((n) => (
@@ -150,11 +172,6 @@ export default function FinancialPartnerLayout({
                     </div>
                   </div>
                 ))}
-              </div>
-              <div className="p-3 text-center border-t border-gray-100 bg-gray-50">
-                <button className="text-sm font-bold text-[#1a4d2e] hover:text-green-700">
-                  View all notifications
-                </button>
               </div>
             </div>
           }

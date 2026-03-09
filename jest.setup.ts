@@ -26,5 +26,10 @@ Object.defineProperty(window, 'localStorage', {
     value: localStorageMock,
 });
 
+jest.mock('next/font/google', () => ({
+    Geist: () => ({ style: { fontFamily: 'mocked' }, className: 'mocked' }),
+    Geist_Mono: () => ({ style: { fontFamily: 'mocked' }, className: 'mocked' }),
+}));
+
 // Suppress console errors during tests (optional, but good for clean output)
 // console.error = jest.fn();

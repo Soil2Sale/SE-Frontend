@@ -1,0 +1,153 @@
+
+> se-frontend@0.1.0 lint
+> eslint
+
+
+/home/raghav3333/SE-Frontend/app/admin/layout.tsx
+  54:14  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/raghav3333/SE-Frontend/app/buyer/layout.tsx
+  54:14  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/raghav3333/SE-Frontend/app/buyer/market-prices/page.tsx
+  32:6  warning  React Hook React.useEffect has a missing dependency: 'fetchPrices'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/raghav3333/SE-Frontend/app/buyer/offers/page.tsx
+  195:51  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/raghav3333/SE-Frontend/app/buyer/support/page.tsx
+   5:8  warning  'Link' is defined but never used                                                                                       @typescript-eslint/no-unused-vars
+  21:3  warning  'ExternalLink' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+  23:3  warning  'MessageCircle' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+  24:3  warning  'Shield' is defined but never used                                                                                     @typescript-eslint/no-unused-vars
+  64:6  warning  React Hook useEffect has a missing dependency: 'fetchNotifications'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/raghav3333/SE-Frontend/app/cooperative/layout.tsx
+  54:14  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/raghav3333/SE-Frontend/app/farmer/ai-insights/page.tsx
+  62:6  warning  React Hook React.useEffect has a missing dependency: 'fetchInsights'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/raghav3333/SE-Frontend/app/farmer/crop-listing/page.tsx
+    7:10  warning  'User' is defined but never used           @typescript-eslint/no-unused-vars
+    9:10  warning  'getUserByRole' is defined but never used  @typescript-eslint/no-unused-vars
+   19:3   warning  'ChevronDown' is defined but never used    @typescript-eslint/no-unused-vars
+  193:45  warning  'index' is defined but never used          @typescript-eslint/no-unused-vars
+  215:43  warning  'index' is defined but never used          @typescript-eslint/no-unused-vars
+
+/home/raghav3333/SE-Frontend/app/farmer/dashboard/page.tsx
+   34:19  warning  'QualityGradeCT' is defined but never used        @typescript-eslint/no-unused-vars
+   65:7   warning  'daysAgo' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  397:10  warning  'loadingData' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  410:14  warning  'e' is defined but never used                     @typescript-eslint/no-unused-vars
+
+/home/raghav3333/SE-Frontend/app/farmer/guidance/page.tsx
+  45:9  warning  'fetchGuidance' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/raghav3333/SE-Frontend/app/farmer/layout.tsx
+   30:10  warning  'farmerProfile' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   91:14  warning  'e' is defined but never used                       @typescript-eslint/no-unused-vars
+  112:16  warning  'e' is defined but never used                       @typescript-eslint/no-unused-vars
+
+/home/raghav3333/SE-Frontend/app/farmer/market-prices/page.tsx
+  32:6  warning  React Hook React.useEffect has a missing dependency: 'fetchPrices'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/raghav3333/SE-Frontend/app/farmer/offers/page.tsx
+  218:70  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  324:68  warning  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/raghav3333/SE-Frontend/app/farmer/profile/page.tsx
+    8:3   warning  'Phone' is defined but never used                                                               @typescript-eslint/no-unused-vars
+    9:3   warning  'Mail' is defined but never used                                                                @typescript-eslint/no-unused-vars
+   10:3   warning  'Calendar' is defined but never used                                                            @typescript-eslint/no-unused-vars
+   18:3   warning  'FileText' is defined but never used                                                            @typescript-eslint/no-unused-vars
+   23:3   warning  'BarChart' is defined but never used                                                            @typescript-eslint/no-unused-vars
+   24:3   warning  'Bar' is defined but never used                                                                 @typescript-eslint/no-unused-vars
+   67:13  warning  'userId' is never reassigned. Use 'const' instead                                               prefer-const
+   82:16  warning  'err' is defined but never used                                                                 @typescript-eslint/no-unused-vars
+   90:5   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+  142:9   warning  'bnplLoans' is assigned a value but never used                                                  @typescript-eslint/no-unused-vars
+  147:9   warning  'assets' is assigned a value but never used                                                     @typescript-eslint/no-unused-vars
+  162:5   warning  'memberDuration' is assigned a value but never used                                             @typescript-eslint/no-unused-vars
+  169:9   warning  'cropsTimelineData' is assigned a value but never used                                          @typescript-eslint/no-unused-vars
+  181:9   warning  'activeCrops' is assigned a value but never used                                                @typescript-eslint/no-unused-vars
+  222:9   warning  'uploadedDocuments' is assigned a value but never used                                          @typescript-eslint/no-unused-vars
+  822:25  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                 react/no-unescaped-entities
+  822:49  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                 react/no-unescaped-entities
+
+/home/raghav3333/SE-Frontend/app/farmer/support/page.tsx
+   5:8  warning  'Link' is defined but never used                                                                                       @typescript-eslint/no-unused-vars
+  21:3  warning  'ExternalLink' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+  23:3  warning  'MessageCircle' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+  24:3  warning  'Shield' is defined but never used                                                                                     @typescript-eslint/no-unused-vars
+  64:6  warning  React Hook useEffect has a missing dependency: 'fetchNotifications'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/raghav3333/SE-Frontend/app/financial-partner/layout.tsx
+  54:14  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/raghav3333/SE-Frontend/app/logistics-provider/layout.tsx
+  54:14  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/raghav3333/SE-Frontend/app/logistics-provider/shipments/page.tsx
+  19:3  warning  'Filter' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/raghav3333/SE-Frontend/app/logistics-provider/support/page.tsx
+  64:6  warning  React Hook useEffect has a missing dependency: 'fetchNotifications'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/home/raghav3333/SE-Frontend/components/Navbar.tsx
+  24:5  warning  'title' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/raghav3333/SE-Frontend/components/WeatherWidget.tsx
+  8:5  warning  'Sun' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/raghav3333/SE-Frontend/components/ui/AnimatedList.tsx
+  164:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/raghav3333/SE-Frontend/components/ui/AnimatedList.tsx:164:5
+  162 |       }
+  163 |     }
+> 164 |     setKeyboardNav(false);
+      |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  165 |   }, [selectedIndex, keyboardNav]);
+  166 |
+  167 |   return (  react-hooks/set-state-in-effect
+
+/home/raghav3333/SE-Frontend/coverage/lcov-report/block-navigation.js
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+/home/raghav3333/SE-Frontend/gen-tests-front.js
+   1:12  warning  A `require()` style import is forbidden                @typescript-eslint/no-require-imports
+   2:14  warning  A `require()` style import is forbidden                @typescript-eslint/no-require-imports
+  54:17  warning  'depth' is never reassigned. Use 'const' instead       prefer-const
+  55:17  warning  'upDir' is never reassigned. Use 'const' instead       prefer-const
+  56:17  warning  'importPath' is never reassigned. Use 'const' instead  prefer-const
+  58:19  warning  'isTsx' is assigned a value but never used             @typescript-eslint/no-unused-vars
+  60:17  warning  'content' is never reassigned. Use 'const' instead     prefer-const
+
+/home/raghav3333/SE-Frontend/services/apiClient.ts
+   7:10  warning  'config' is defined but never used  @typescript-eslint/no-unused-vars
+  99:12  warning  'error' is defined but never used   @typescript-eslint/no-unused-vars
+
+/home/raghav3333/SE-Frontend/services/auth/__tests__/authApi.test.ts
+   91:49  warning  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  113:40  warning  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  127:37  warning  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/home/raghav3333/SE-Frontend/services/auth/authApi.ts
+  1:10  warning  'i' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/raghav3333/SE-Frontend/services/crop-listing/cropApi.ts
+  3:3  warning  'CropListing' is defined but never used                        @typescript-eslint/no-unused-vars
+  4:3  warning  'CropListingStatus' is defined but never used                  @typescript-eslint/no-unused-vars
+  5:3  warning  'QualityGrade' is defined but never used                       @typescript-eslint/no-unused-vars
+  9:3  warning  'GetCropListingsByFarmerIdResponse' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 74 problems (0 errors, 74 warnings)
+  0 errors and 7 warnings potentially fixable with the `--fix` option.
+
