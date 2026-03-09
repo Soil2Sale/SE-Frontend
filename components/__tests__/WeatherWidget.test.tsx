@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { act } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import WeatherWidget from '../WeatherWidget';
 import '@testing-library/jest-dom';
@@ -42,93 +42,129 @@ const mockWeather = {
 describe('WeatherWidget', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        jest.spyOn(console, 'warn').mockImplementation(() => { });
+        jest.spyOn(console, 'error').mockImplementation(() => { });
         // Reset the locationCache so each test starts fresh
         // (the cache is module-level; setting an unlikely coord avoids cache hits)
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     // ── Unit Tests ────────────────────────────────────────────────────────────
 
     it('renders the temperature', () => {
-        render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        act(() => {
+            render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        });
         expect(screen.getByText('25°C')).toBeInTheDocument();
     });
 
     it('renders the Max and Min temp', () => {
-        render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        act(() => {
+            render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        });
         // Rendered as separate text nodes: "▲ " "30" "°"
         expect(screen.getByText(/30/)).toBeInTheDocument();
         expect(screen.getByText(/20/)).toBeInTheDocument();
     });
 
     it('renders the condition label', () => {
-        render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        act(() => {
+            render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        });
         expect(screen.getByText('Sunny')).toBeInTheDocument();
     });
 
     it('renders the cloud-sun icon for Sunny condition', () => {
-        render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        act(() => {
+            render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        });
         expect(screen.getByTestId('cloud-sun-icon')).toBeInTheDocument();
     });
 
     it('renders cloud-rain icon for Rainy condition', () => {
         const rainWeather = { ...mockWeather, condition: 'Rainy' };
-        render(<WeatherWidget latitude={19.076} longitude={72.877} weather={rainWeather} />);
+        act(() => {
+            render(<WeatherWidget latitude={19.076} longitude={72.877} weather={rainWeather} />);
+        });
         expect(screen.getByTestId('cloud-rain-icon')).toBeInTheDocument();
     });
 
     it('renders cloud-lightning icon for Stormy condition', () => {
         const stormWeather = { ...mockWeather, condition: 'Thunderstorm / Lightning' };
-        render(<WeatherWidget latitude={19.076} longitude={72.877} weather={stormWeather} />);
+        act(() => {
+            render(<WeatherWidget latitude={19.076} longitude={72.877} weather={stormWeather} />);
+        });
         expect(screen.getByTestId('cloud-lightning-icon')).toBeInTheDocument();
     });
 
     it('renders cloud-snow icon for Snowy condition', () => {
         const snowWeather = { ...mockWeather, condition: 'Snowfall' };
-        render(<WeatherWidget latitude={19.076} longitude={72.877} weather={snowWeather} />);
+        act(() => {
+            render(<WeatherWidget latitude={19.076} longitude={72.877} weather={snowWeather} />);
+        });
         expect(screen.getByTestId('cloud-snow-icon')).toBeInTheDocument();
     });
 
     it('renders cloud icon for Cloudy condition', () => {
         const cloudyWeather = { ...mockWeather, condition: 'Partly cloudy' };
-        render(<WeatherWidget latitude={19.076} longitude={72.877} weather={cloudyWeather} />);
+        act(() => {
+            render(<WeatherWidget latitude={19.076} longitude={72.877} weather={cloudyWeather} />);
+        });
         expect(screen.getByTestId('cloud-icon')).toBeInTheDocument();
     });
 
     it('displays humidity percentage', () => {
-        render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        act(() => {
+            render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        });
         expect(screen.getByText('60%')).toBeInTheDocument();
     });
 
     it('displays wind speed', () => {
-        render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        act(() => {
+            render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        });
         expect(screen.getByText('15 km/h')).toBeInTheDocument();
     });
 
     it('shows UV Index value', () => {
-        render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        act(() => {
+            render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        });
         expect(screen.getByText('7')).toBeInTheDocument();
     });
 
     it('shows "High" UV warning label (hardcoded in component)', () => {
-        render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        act(() => {
+            render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        });
         expect(screen.getByText('High')).toBeInTheDocument();
     });
 
     it('renders rain prediction: None', () => {
-        render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        act(() => {
+            render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        });
         expect(screen.getByText('Rain: None')).toBeInTheDocument();
     });
 
     it('renders rain prediction with a day when next_rain is set', () => {
         const rainPrediction = { ...mockWeather, next_rain: 'Fri' };
-        render(<WeatherWidget latitude={19.076} longitude={72.877} weather={rainPrediction} />);
+        act(() => {
+            render(<WeatherWidget latitude={19.076} longitude={72.877} weather={rainPrediction} />);
+        });
         expect(screen.getByText('Rain: Fri')).toBeInTheDocument();
     });
 
     // ── Integration: async location name resolution ───────────────────────────
 
     it('resolves location name from lat/lon via API and displays it', async () => {
-        render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        act(() => {
+            render(<WeatherWidget latitude={19.076} longitude={72.877} weather={mockWeather} />);
+        });
         // After async useEffect resolves, location name should update
         await waitFor(() => {
             expect(screen.getByText('Mumbai, Maharashtra')).toBeInTheDocument();
@@ -138,7 +174,9 @@ describe('WeatherWidget', () => {
     it('falls back to "Mumbai, Maharashtra" when OpenWeather API key is absent', async () => {
         // Simulate no API key → component takes the early-return path
         (global.fetch as jest.Mock).mockImplementationOnce(() => Promise.reject(new Error('No key')));
-        render(<WeatherWidget latitude={0} longitude={0} weather={mockWeather} />);
+        act(() => {
+            render(<WeatherWidget latitude={0} longitude={0} weather={mockWeather} />);
+        });
         await waitFor(() => {
             expect(screen.getByText(/Mumbai/)).toBeInTheDocument();
         });
