@@ -195,27 +195,12 @@ export const NAV_LINKS: Record<string, NavLink[]> = {
       icon: <Users className="w-5 h-5" />,
     },
     {
-      label: "Content Hub",
-      href: "/admin/content-hub",
-      icon: <Book className="w-5 h-5" />,
-    },
-    {
-      label: "Market Prices",
-      href: "/admin/market-prices",
-      icon: <LineChart className="w-5 h-5" />,
-    },
-    {
-      label: "AI Insights Monitor",
-      href: "/admin/ai-monitor",
-      icon: <Lightbulb className="w-5 h-5" />,
-    },
-    {
       label: "Audit Logs",
       href: "/admin/audit-logs",
       icon: <Lock className="w-5 h-5" />,
     },
     {
-      label: "Support & Disputes",
+      label: "Support",
       href: "/admin/support",
       icon: <AlertCircle className="w-5 h-5" />,
     },

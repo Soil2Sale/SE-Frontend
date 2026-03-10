@@ -8,7 +8,7 @@ interface StatusChipProps {
 const getStatusStyle = (status: string) => {
   const statusLower = status.toLowerCase();
 
-  if (statusLower === "created" || statusLower === "pending") {
+  if (statusLower === "created" || statusLower === "pending" || statusLower === "inactive") {
     return "bg-gray-500/20 text-gray-300 border-gray-500/50";
   }
   if (statusLower === "dispatched") {
@@ -17,7 +17,7 @@ const getStatusStyle = (status: string) => {
   if (statusLower === "in_transit" || statusLower === "in transit") {
     return "bg-yellow-500/20 text-yellow-300 border-yellow-500/50";
   }
-  if (statusLower === "delivered" || statusLower === "completed") {
+  if (statusLower === "delivered" || statusLower === "completed" || statusLower === "active") {
     return "bg-green-500/20 text-green-300 border-green-500/50";
   }
   if (statusLower === "cancelled" || statusLower === "failed") {
