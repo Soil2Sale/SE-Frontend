@@ -24,3 +24,8 @@ export const getAllAuditLogs = async (params?: any) => {
     const response = await apiClient.get("/audit-logs", { params });
     return response.data;
 };
+
+export const getAllTransactions = async (params?: any) => {
+    const response = await apiClient.get("/transactions", { params });
+    return response.data;
+};
