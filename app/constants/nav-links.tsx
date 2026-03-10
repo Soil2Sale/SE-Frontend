@@ -207,7 +207,7 @@ export const NAV_LINKS: Record<string, NavLink[]> = {
     {
       label: "Support",
       href: "/admin/support",
-      icon: <AlertCircle className="w-5 h-5" />,
+      icon: <Settings className="w-5 h-5" />,
     },
   ],
 };

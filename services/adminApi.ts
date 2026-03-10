@@ -19,3 +19,8 @@ export const updateDisputeStatus = async (id: string, status: string) => {
     const response = await apiClient.patch(`/disputes/${id}/status`, { status });
     return response.data;
 };
+
+export const getAllAuditLogs = async (params?: any) => {
+    const response = await apiClient.get("/audit-logs", { params });
+    return response.data;
+};
