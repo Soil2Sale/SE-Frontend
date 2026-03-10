@@ -16,21 +16,14 @@ import {
 import LanguageSelector from "@/components/ui/LanguageSelector";
 import { translations, Language } from "@/app/constants/translations";
 import { login, verifyOtp } from "@/services/auth/authApi";
-import {
-  isWebAuthnSupported,
-  generateAuthenticationOptions,
-  authenticateWithPasskey,
-  verifyAuthentication,
-} from "@/services/webauthn/webauthnService";
-
-type PasskeyStatus = "idle" | "waiting" | "verifying" | "verified" | "error";
 
 export default function LoginPage() {
   const router = useRouter();
   const [lang, setLang] = useState<Language>("en");
   const t = translations[lang];
 
-  const [identifier, setIdentifier] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [securityPin, setSecurityPin] = useState("");
   const [otp, setOtp] = useState("");
   const [userId, setUserId] = useState("");
   const [method, setMethod] = useState<"email" | "telegram" | "">("");
@@ -39,29 +32,20 @@ export default function LoginPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [otpSent, setOtpSent] = useState(false);
 
-  // Passkey (WebAuthn) state
-  const [isPasskeyVerified, setIsPasskeyVerified] = useState(false);
-  const [passkeyStatus, setPasskeyStatus] = useState<PasskeyStatus>("idle");
-  const [passkeyError, setPasskeyError] = useState("");
-  const [webAuthnAvailable, setWebAuthnAvailable] = useState(true);
-
-  useEffect(() => {
-    setWebAuthnAvailable(isWebAuthnSupported());
-  }, []);
-
   // Fire OTP request (existing logic, unchanged)
+  // Fire OTP request (existing logic, modified for pin)
   const fireOtp = async () => {
     setError("");
     setLoading(true);
 
-    if (!identifier) {
-      setError("Please enter your email or phone number");
+    if (!mobileNumber || !securityPin) {
+      setError("Please enter your mobile number and security PIN");
       setLoading(false);
       return;
     }
 
     try {
-      const response = await login({ identifier });
+      const response = await login({ mobile_number: mobileNumber, security_pin: securityPin });
       setUserId(response.data.userId);
       setMethod(response.data.method);
       setOtpSent(true);
@@ -73,71 +57,8 @@ export default function LoginPage() {
     }
   };
 
-  // WebAuthn passkey authentication flow
-  const handlePasskeyAuth = async () => {
-    setPasskeyError("");
-    setPasskeyStatus("waiting");
-
-    try {
-      // Step 1: Get authentication options (mock backend)
-      const options = await generateAuthenticationOptions(identifier);
-
-      // Step 2: Trigger real browser WebAuthn prompt
-      const credential = await authenticateWithPasskey(options);
-
-      // Step 3: Verify with backend (mock)
-      setPasskeyStatus("verifying");
-      const result = await verifyAuthentication(credential);
-
-      if (result.verified) {
-        setPasskeyStatus("verified");
-        setIsPasskeyVerified(true);
-
-        // Auto-fire OTP after a brief success display
-        setTimeout(async () => {
-          await fireOtp();
-        }, 800);
-      } else {
-        setPasskeyStatus("error");
-        setPasskeyError("Passkey verification failed. Please try again.");
-      }
-    } catch (err: any) {
-      setPasskeyStatus("error");
-
-      // Handle specific WebAuthn errors
-      if (err.name === "NotAllowedError") {
-        setPasskeyError(
-          "Authentication cancelled. Please try again to verify your identity."
-        );
-      } else if (err.name === "SecurityError") {
-        setPasskeyError(
-          "Security error. Make sure you're on a secure connection."
-        );
-      } else if (err.name === "AbortError") {
-        setPasskeyError("Authentication timed out. Please try again.");
-      } else {
-        setPasskeyError(
-          err.message || "Passkey authentication failed. Please try again."
-        );
-      }
-    }
-  };
-
-  // Intercept Get OTP — require passkey first
+  // Re-map handleGetOtp directly to fireOtp
   const handleGetOtp = async () => {
-    if (!identifier) {
-      setError("Please enter your email or phone number");
-      return;
-    }
-    setError("");
-
-    if (!isPasskeyVerified) {
-      // Start passkey flow
-      await handlePasskeyAuth();
-      return;
-    }
-
-    // Passkey already verified, send OTP directly
     await fireOtp();
   };
 
@@ -173,66 +94,7 @@ export default function LoginPage() {
     }
   };
 
-  // Helper to get passkey status message
-  const getPasskeyStatusContent = () => {
-    switch (passkeyStatus) {
-      case "waiting":
-        return (
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold bg-[#FFF8E1] border border-[#FFE082] text-[#F57F17] animate-fade-in">
-            <div className="relative">
-              <Fingerprint className="w-5 h-5 passkey-pulse" />
-            </div>
-            <div>
-              <p className="font-bold">Waiting for device authentication…</p>
-              <p className="text-xs font-normal opacity-80">
-                Complete the biometric or security key prompt in your browser
-              </p>
-            </div>
-          </div>
-        );
-      case "verifying":
-        return (
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold bg-[#E3F2FD] border border-[#90CAF9] text-[#1565C0] animate-fade-in">
-            <Loader2 className="w-5 h-5 passkey-spinner" />
-            <div>
-              <p className="font-bold">Verifying passkey…</p>
-              <p className="text-xs font-normal opacity-80">
-                Confirming your identity with the server
-              </p>
-            </div>
-          </div>
-        );
-      case "verified":
-        return (
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold bg-[#E8F5E9] border border-[#A5D6A7] text-[#2E7D32] animate-fade-in">
-            <CheckCircle2 className="w-5 h-5 passkey-success-check" />
-            <div>
-              <p className="font-bold">Passkey Verified</p>
-              <p className="text-xs font-normal opacity-80">
-                Identity confirmed — enter your OTP to sign in
-              </p>
-            </div>
-          </div>
-        );
-      case "error":
-        return (
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 animate-fade-in">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <div>
-              <p className="font-semibold">{passkeyError}</p>
-              <button
-                onClick={handlePasskeyAuth}
-                className="text-xs underline mt-1 hover:opacity-80 transition-opacity"
-              >
-                Try again
-              </button>
-            </div>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
+
 
   return (
     <div className="flex min-h-screen w-full bg-[#FAFAFA] dark:bg-[#0a0a0a] text-[#263238] dark:text-[#E8F5E9] overflow-hidden">
@@ -288,40 +150,63 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* WebAuthn not supported warning */}
-          {!webAuthnAvailable && (
-            <div className="flex items-center gap-2 px-4 py-3 rounded-2xl text-sm bg-[#FFF3E0] border border-[#FFE0B2] text-[#E65100]">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              WebAuthn is not supported in this browser. Please use a modern
-              browser like Chrome, Edge, or Safari.
-            </div>
-          )}
 
-          {/* Passkey status indicator */}
-          {getPasskeyStatusContent()}
 
           <div className="space-y-6 bg-[#E8F5E9] dark:bg-[#111] p-8 rounded-3xl shadow-xl shadow-[#1B5E20]/5 border border-[#A5D6A7]/30 dark:border-[#333]">
             {/* Identity Input */}
-            <div className="space-y-2">
-              <label
-                htmlFor="identity"
-                className="text-sm font-bold leading-none text-[#1B5E20] dark:text-[#E8F5E9] ml-1"
-              >
-                {t.emailLabel}
-              </label>
-              <input
-                id="identity"
-                name="identity"
-                type="text"
-                value={identifier}
-                onChange={(e) => {
-                  setIdentifier(e.target.value);
-                  setError("");
-                }}
-                className="flex h-12 w-full rounded-2xl border border-[#A5D6A7] dark:border-[#333] bg-[#FAFAFA] dark:bg-[#1a1a1a] px-4 py-3 text-sm placeholder:text-[#263238]/40 focus:outline-none focus:ring-2 focus:ring-[#2E7D32] dark:focus:ring-[#A5D6A7] focus:border-transparent transition-all duration-300 hover:border-[#1B5E20]"
-                placeholder={t.emailPlaceholder}
-                disabled={loading || otpSent}
-              />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label
+                  htmlFor="mobileNumber"
+                  className="text-sm font-bold leading-none text-[#1B5E20] dark:text-[#E8F5E9] ml-1"
+                >
+                  Mobile Number
+                </label>
+                <div className="relative group">
+                  <Smartphone className="absolute left-4 top-3.5 h-5 w-5 text-[#263238]/40 group-focus-within:text-[#1B5E20] transition-colors duration-300" />
+                  <input
+                    id="mobileNumber"
+                    name="mobileNumber"
+                    type="tel"
+                    value={mobileNumber}
+                    onChange={(e) => {
+                      setMobileNumber(e.target.value);
+                      setError("");
+                    }}
+                    className="flex h-12 w-full rounded-2xl border border-[#A5D6A7] dark:border-[#333] bg-[#FAFAFA] dark:bg-[#1a1a1a] pl-11 pr-4 py-3 text-sm placeholder:text-[#263238]/40 focus:outline-none focus:ring-2 focus:ring-[#2E7D32] dark:focus:ring-[#A5D6A7] focus:border-transparent transition-all duration-300 hover:border-[#1B5E20]"
+                    placeholder="+91 98765 43210"
+                    disabled={loading || otpSent}
+                  />
+                </div>
+              </div>
+
+              {/* Security PIN Input */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="securityPin"
+                  className="text-sm font-bold leading-none text-[#1B5E20] dark:text-[#E8F5E9] ml-1"
+                >
+                  6-Digit Security PIN
+                </label>
+                <div className="relative group">
+                  <ShieldCheck className="absolute left-4 top-3.5 h-5 w-5 text-[#263238]/40 group-focus-within:text-[#1B5E20] transition-colors duration-300" />
+                  <input
+                    id="securityPin"
+                    name="securityPin"
+                    type="password"
+                    maxLength={6}
+                    value={securityPin}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, ""); // Allow only numbers
+                      setSecurityPin(val);
+                      setError("");
+                    }}
+                    className="flex h-12 w-full rounded-2xl border border-[#A5D6A7] dark:border-[#333] bg-[#FAFAFA] dark:bg-[#1a1a1a] pl-11 pr-4 py-3 text-sm placeholder:text-[#263238]/40 focus:outline-none focus:ring-2 focus:ring-[#2E7D32] dark:focus:ring-[#A5D6A7] focus:border-transparent transition-all duration-300 hover:border-[#1B5E20] font-mono tracking-widest"
+                    placeholder="••••••"
+                    disabled={loading || otpSent}
+                  />
+                </div>
+              </div>
             </div>
 
             {/* OTP Section */}
@@ -354,38 +239,23 @@ export default function LoginPage() {
                   onClick={handleGetOtp}
                   disabled={
                     loading ||
-                    otpSent ||
-                    !webAuthnAvailable ||
-                    passkeyStatus === "waiting" ||
-                    passkeyStatus === "verifying"
+                    otpSent
                   }
                   className="group relative flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0088cc] px-5 py-3 text-sm font-bold text-white shadow-md shadow-[#0088cc]/20 hover:shadow-lg hover:shadow-[#0088cc]/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
-                  {passkeyStatus === "waiting" ||
-                    passkeyStatus === "verifying" ? (
-                    <>
-                      <Loader2 className="h-4 w-4 passkey-spinner" />
-                      {passkeyStatus === "waiting"
-                        ? "Authenticating…"
-                        : "Verifying…"}
-                    </>
-                  ) : (
-                    <>
-                      <Smartphone className="h-4 w-4" />
-                      {loading
-                        ? "Sending..."
-                        : otpSent
-                          ? "OTP Sent"
-                          : t.getOtp}
-                      <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
-                    </>
-                  )}
+                  <>
+                    <Smartphone className="h-4 w-4" />
+                    {loading
+                      ? "Sending..."
+                      : otpSent
+                        ? "OTP Sent"
+                        : t.getOtp}
+                    <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                  </>
                 </button>
               )}
               <p className="text-[11px] text-center text-[#263238]/60 dark:text-[#E8F5E9]/60">
-                {!isPasskeyVerified
-                  ? "Passkey verification required before OTP can be sent"
-                  : t.otpRedirect}
+                {t.otpRedirect}
               </p>
             </div>
 
@@ -411,15 +281,14 @@ export default function LoginPage() {
                   }}
                   placeholder={t.otpPlaceholder}
                   className="flex h-12 w-full rounded-2xl border border-[#A5D6A7] dark:border-[#333] bg-[#FAFAFA] dark:bg-[#1a1a1a] pl-11 pr-4 py-3 text-sm text-center tracking-[0.8em] placeholder:tracking-normal placeholder:text-[#263238]/40 focus:outline-none focus:ring-2 focus:ring-[#2E7D32] dark:focus:ring-[#A5D6A7] focus:border-transparent transition-all duration-300 font-mono hover:border-[#1B5E20]"
-                  disabled={loading || !otpSent || !isPasskeyVerified}
+                  disabled={loading || !otpSent}
                 />
               </div>
             </div>
 
-            {/* Sign In Button */}
             <button
               onClick={handleLogin}
-              disabled={loading || !otpSent || !isPasskeyVerified}
+              disabled={loading || !otpSent}
               className="w-full rounded-2xl bg-[#1B5E20] dark:bg-[#2E7D32] px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#1B5E20]/20 hover:shadow-xl hover:shadow-[#1B5E20]/30 hover:bg-[#2E7D32] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {loading ? "Signing in..." : t.submitBtn}
