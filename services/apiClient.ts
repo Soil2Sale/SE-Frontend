@@ -20,7 +20,7 @@ interface ApiError {
   statusCode?: number;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api";
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,

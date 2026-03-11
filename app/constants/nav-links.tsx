@@ -70,6 +70,11 @@ export const NAV_LINKS: Record<string, NavLink[]> = {
       icon: <Truck className="w-5 h-5" />,
     },
     {
+      label: "Disputes",
+      href: "/farmer/disputes",
+      icon: <AlertCircle className="w-5 h-5" />,
+    },
+    {
       label: "Support",
       href: "/farmer/support",
       icon: <AlertCircle className="w-5 h-5" />,
