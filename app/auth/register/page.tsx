@@ -23,8 +23,8 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState({
     name: "",
     mobile_number: "",
-    recovery_email: "",
-    role: "farmer",
+    security_pin: "",
+    role: "Farmer",
   });
   
   const [userId, setUserId] = useState("");
@@ -46,8 +46,14 @@ export default function RegisterPage() {
     setError("");
     setLoading(true);
 
-    if (!formData.name || !formData.mobile_number) {
-      setError("Name and phone number are required");
+    if (!formData.name || !formData.mobile_number || !formData.security_pin) {
+      setError("Name, phone number, and a 6-digit security PIN are required");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.security_pin.length !== 6) {
+      setError("Security PIN must be exactly 6 digits");
       setLoading(false);
       return;
     }
@@ -57,7 +63,7 @@ export default function RegisterPage() {
         name: formData.name,
         mobile_number: formData.mobile_number,
         role: formData.role,
-        recovery_email: formData.recovery_email || undefined,
+        security_pin: formData.security_pin,
       });
 
       setUserId(response.data.user.id);
@@ -202,24 +208,30 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                {/* Email Input (Optional) */}
+                {/* Security PIN Input */}
                 <div className="space-y-2">
                   <label
-                    htmlFor="email"
+                    htmlFor="security_pin"
                     className="text-sm font-bold leading-none text-[#1B5E20] dark:text-[#E8F5E9] ml-1"
                   >
-                    {t.emailOptionalLabel}
+                    Create a 6-Digit Security PIN
                   </label>
                   <div className="relative group">
-                    <User className="absolute left-4 top-3.5 h-5 w-5 text-[#263238]/40 group-focus-within:text-[#1B5E20] transition-colors duration-300" />
+                    <ShieldCheck className="absolute left-4 top-3.5 h-5 w-5 text-[#263238]/40 group-focus-within:text-[#1B5E20] transition-colors duration-300" />
                     <input
-                      id="email"
-                      name="recovery_email"
-                      type="email"
-                      value={formData.recovery_email}
-                      onChange={handleInputChange}
-                      className="flex h-12 w-full rounded-2xl border border-[#A5D6A7] dark:border-[#333] bg-[#FAFAFA] dark:bg-[#1a1a1a] pl-11 pr-4 py-3 text-sm placeholder:text-[#263238]/40 focus:outline-none focus:ring-2 focus:ring-[#2E7D32] dark:focus:ring-[#A5D6A7] focus:border-transparent transition-all duration-300 hover:border-[#1B5E20]"
-                      placeholder="john@example.com"
+                      id="security_pin"
+                      name="security_pin"
+                      type="password"
+                      maxLength={6}
+                      value={formData.security_pin}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, ""); // Allow only numbers
+                        handleInputChange({
+                          target: { name: "security_pin", value: val },
+                        } as React.ChangeEvent<HTMLInputElement>);
+                      }}
+                      className="flex h-12 w-full rounded-2xl border border-[#A5D6A7] dark:border-[#333] bg-[#FAFAFA] dark:bg-[#1a1a1a] pl-11 pr-4 py-3 text-sm placeholder:text-[#263238]/40 focus:outline-none focus:ring-2 focus:ring-[#2E7D32] dark:focus:ring-[#A5D6A7] focus:border-transparent transition-all duration-300 hover:border-[#1B5E20] font-mono tracking-widest"
+                      placeholder="••••••"
                       disabled={loading}
                     />
                   </div>

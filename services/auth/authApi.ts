@@ -9,7 +9,7 @@ export interface RegisterRequest {
   name: string;
   mobile_number: string;
   role: string;
-  recovery_email?: string;
+  security_pin: string;
 }
 
 export interface VerifyRegistrationRequest {
@@ -18,7 +18,8 @@ export interface VerifyRegistrationRequest {
 }
 
 export interface LoginRequest {
-  identifier: string; // email or mobile number
+  mobile_number: string;
+  security_pin: string;
 }
 
 export interface VerifyOtpRequest {
@@ -39,7 +40,6 @@ export interface RegisterResponse {
       name: string;
       mobile_number: string;
       role: string;
-      recovery_email?: string;
       is_verified: boolean;
       is_telegram_linked: boolean;
       created_at: string;
@@ -59,7 +59,6 @@ export interface VerifyRegistrationResponse {
       name: string;
       mobile_number: string;
       role: string;
-      recovery_email?: string;
       is_verified: boolean;
       is_telegram_linked: boolean;
       created_at: string;
@@ -86,7 +85,6 @@ export interface VerifyOtpResponse {
       name: string;
       mobile_number: string;
       role: string;
-      recovery_email?: string;
       is_verified: boolean;
       is_telegram_linked: boolean;
       telegram_chat_id?: string;

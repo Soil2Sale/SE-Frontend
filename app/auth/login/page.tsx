@@ -1,9 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Smartphone, ShieldCheck, ArrowRight } from "lucide-react";
+import {
+  ArrowLeft,
+  Smartphone,
+  ShieldCheck,
+  ArrowRight,
+  Fingerprint,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
 import LanguageSelector from "@/components/ui/LanguageSelector";
 import { translations, Language } from "@/app/constants/translations";
 import { login, verifyOtp } from "@/services/auth/authApi";
@@ -13,7 +22,8 @@ export default function LoginPage() {
   const [lang, setLang] = useState<Language>("en");
   const t = translations[lang];
 
-  const [identifier, setIdentifier] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [securityPin, setSecurityPin] = useState("");
   const [otp, setOtp] = useState("");
   const [userId, setUserId] = useState("");
   const [method, setMethod] = useState<"email" | "telegram" | "">("");
@@ -22,21 +32,20 @@ export default function LoginPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [otpSent, setOtpSent] = useState(false);
 
-  const handleGetOtp = async () => {
+  // Fire OTP request (existing logic, unchanged)
+  // Fire OTP request (existing logic, modified for pin)
+  const fireOtp = async () => {
     setError("");
     setLoading(true);
 
-    if (!identifier) {
-      setError("Please enter your email or phone number");
+    if (!mobileNumber || !securityPin) {
+      setError("Please enter your mobile number and security PIN");
       setLoading(false);
       return;
     }
 
     try {
-      const response = await login({
-        identifier,
-      });
-
+      const response = await login({ mobile_number: mobileNumber, security_pin: securityPin });
       setUserId(response.data.userId);
       setMethod(response.data.method);
       setOtpSent(true);
@@ -46,6 +55,11 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Re-map handleGetOtp directly to fireOtp
+  const handleGetOtp = async () => {
+    await fireOtp();
   };
 
   const handleLogin = async () => {
@@ -59,11 +73,7 @@ export default function LoginPage() {
     }
 
     try {
-      const response = await verifyOtp({
-        userId,
-        otp,
-      });
-
+      const response = await verifyOtp({ userId, otp });
       setSuccessMessage(response.message);
 
       const role = response.data.user?.role || "user";
@@ -71,10 +81,9 @@ export default function LoginPage() {
       setTimeout(() => {
         if (role.toLocaleLowerCase() === "buyer") {
           router.push("/buyer/marketplace");
-        }else {
+        } else {
           router.push(
-              `/${role.toLocaleLowerCase()}/dashboard` ||
-              "/farmer/dashboard",
+            `/${role.toLocaleLowerCase()}/dashboard` || "/farmer/dashboard"
           );
         }
       }, 500);
@@ -84,6 +93,8 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+
 
   return (
     <div className="flex min-h-screen w-full bg-[#FAFAFA] dark:bg-[#0a0a0a] text-[#263238] dark:text-[#E8F5E9] overflow-hidden">
@@ -139,28 +150,63 @@ export default function LoginPage() {
             </div>
           )}
 
+
+
           <div className="space-y-6 bg-[#E8F5E9] dark:bg-[#111] p-8 rounded-3xl shadow-xl shadow-[#1B5E20]/5 border border-[#A5D6A7]/30 dark:border-[#333]">
             {/* Identity Input */}
-            <div className="space-y-2">
-              <label
-                htmlFor="identity"
-                className="text-sm font-bold leading-none text-[#1B5E20] dark:text-[#E8F5E9] ml-1"
-              >
-                {t.emailLabel}
-              </label>
-              <input
-                id="identity"
-                name="identity"
-                type="text"
-                value={identifier}
-                onChange={(e) => {
-                  setIdentifier(e.target.value);
-                  setError("");
-                }}
-                className="flex h-12 w-full rounded-2xl border border-[#A5D6A7] dark:border-[#333] bg-[#FAFAFA] dark:bg-[#1a1a1a] px-4 py-3 text-sm placeholder:text-[#263238]/40 focus:outline-none focus:ring-2 focus:ring-[#2E7D32] dark:focus:ring-[#A5D6A7] focus:border-transparent transition-all duration-300 hover:border-[#1B5E20]"
-                placeholder={t.emailPlaceholder}
-                disabled={loading || otpSent}
-              />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label
+                  htmlFor="mobileNumber"
+                  className="text-sm font-bold leading-none text-[#1B5E20] dark:text-[#E8F5E9] ml-1"
+                >
+                  Mobile Number
+                </label>
+                <div className="relative group">
+                  <Smartphone className="absolute left-4 top-3.5 h-5 w-5 text-[#263238]/40 group-focus-within:text-[#1B5E20] transition-colors duration-300" />
+                  <input
+                    id="mobileNumber"
+                    name="mobileNumber"
+                    type="tel"
+                    value={mobileNumber}
+                    onChange={(e) => {
+                      setMobileNumber(e.target.value);
+                      setError("");
+                    }}
+                    className="flex h-12 w-full rounded-2xl border border-[#A5D6A7] dark:border-[#333] bg-[#FAFAFA] dark:bg-[#1a1a1a] pl-11 pr-4 py-3 text-sm placeholder:text-[#263238]/40 focus:outline-none focus:ring-2 focus:ring-[#2E7D32] dark:focus:ring-[#A5D6A7] focus:border-transparent transition-all duration-300 hover:border-[#1B5E20]"
+                    placeholder="+91 98765 43210"
+                    disabled={loading || otpSent}
+                  />
+                </div>
+              </div>
+
+              {/* Security PIN Input */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="securityPin"
+                  className="text-sm font-bold leading-none text-[#1B5E20] dark:text-[#E8F5E9] ml-1"
+                >
+                  6-Digit Security PIN
+                </label>
+                <div className="relative group">
+                  <ShieldCheck className="absolute left-4 top-3.5 h-5 w-5 text-[#263238]/40 group-focus-within:text-[#1B5E20] transition-colors duration-300" />
+                  <input
+                    id="securityPin"
+                    name="securityPin"
+                    type="password"
+                    maxLength={6}
+                    value={securityPin}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, ""); // Allow only numbers
+                      setSecurityPin(val);
+                      setError("");
+                    }}
+                    className="flex h-12 w-full rounded-2xl border border-[#A5D6A7] dark:border-[#333] bg-[#FAFAFA] dark:bg-[#1a1a1a] pl-11 pr-4 py-3 text-sm placeholder:text-[#263238]/40 focus:outline-none focus:ring-2 focus:ring-[#2E7D32] dark:focus:ring-[#A5D6A7] focus:border-transparent transition-all duration-300 hover:border-[#1B5E20] font-mono tracking-widest"
+                    placeholder="••••••"
+                    disabled={loading || otpSent}
+                  />
+                </div>
+              </div>
             </div>
 
             {/* OTP Section */}
@@ -191,12 +237,21 @@ export default function LoginPage() {
               ) : (
                 <button
                   onClick={handleGetOtp}
-                  disabled={loading || otpSent}
+                  disabled={
+                    loading ||
+                    otpSent
+                  }
                   className="group relative flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0088cc] px-5 py-3 text-sm font-bold text-white shadow-md shadow-[#0088cc]/20 hover:shadow-lg hover:shadow-[#0088cc]/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
-                  <Smartphone className="h-4 w-4" />
-                  {loading ? "Sending..." : otpSent ? "OTP Sent" : t.getOtp}
-                  <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                  <>
+                    <Smartphone className="h-4 w-4" />
+                    {loading
+                      ? "Sending..."
+                      : otpSent
+                        ? "OTP Sent"
+                        : t.getOtp}
+                    <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                  </>
                 </button>
               )}
               <p className="text-[11px] text-center text-[#263238]/60 dark:text-[#E8F5E9]/60">
@@ -231,7 +286,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Sign In Button */}
             <button
               onClick={handleLogin}
               disabled={loading || !otpSent}
