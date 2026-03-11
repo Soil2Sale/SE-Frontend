@@ -18,10 +18,12 @@ import {
 import { getActiveCropListings } from "@/services/crop-listing/cropApi";
 import { getTransactionsByUser } from "@/services/transaction/transactionApi";
 import { getGovernmentSchemes } from "@/services/government-schemes/governmentSchemesApi";
+import { getProfile } from "@/services/user/userApi";
+import { getFarmerProfileByUserId } from "@/services/farmer/farmerProfileApi";
+import { useFarmerLang } from "@/app/contexts/FarmerLanguageContext";
 
 import {
   Transaction,
-  WeatherData,
   Scheme,
   TransactionType,
   TransactionStatus,
@@ -45,21 +47,6 @@ import type {
 // Notification types moved to `types/dashboard.types.ts`
 
 // 8. Advisories
-
-// --- Mock Data Values ---
-
-const mockWeather: WeatherData = {
-  temp: 29,
-  condition: "Mostly sunny",
-  humidity: 62,
-  wind_speed: 12,
-  pressure: 1013,
-  advisory: "Ideal conditions for cotton harvesting today.",
-  uv_index: 8,
-  max_temp: 34,
-  min_temp: 24,
-  next_rain: "Tue, 4 PM",
-};
 
 // HELPER: Generate date X days ago
 const daysAgo = (days: number) => {
@@ -172,7 +159,7 @@ const processTransactions = (transactions: Transaction[]) => {
     }
 
     if (txn.type === TransactionType.CROP_SALE) {
-      groupedData[monthKey].sales += (txn.amount * 1.25);
+      groupedData[monthKey].sales += txn.amount * 1.25;
     } else if (
       [
         TransactionType.LOGISTICS_FEE,
@@ -180,8 +167,8 @@ const processTransactions = (transactions: Transaction[]) => {
         TransactionType.ADJUSTMENT,
       ].includes(txn.type)
     ) {
-      groupedData[monthKey].sales += (txn.amount * 1.25);
-      groupedData[monthKey].deductions += (txn.amount * 0.1);
+      groupedData[monthKey].sales += txn.amount * 1.25;
+      groupedData[monthKey].deductions += txn.amount * 0.1;
     }
   });
 
@@ -205,9 +192,10 @@ const mockNotifications: MockNotification[] = [ ... ];
 // --- Components ---
 
 function CropsOnSaleOverview({ listings }: { listings: CropListingCT[] }) {
-  // 1. Filter for ACTIVE Status (backend uses CropListingStatus)
+  const { t } = useFarmerLang();
+  // 1. Filter for ACTIVE Status (case-insensitive to handle backend enum variations)
   const activeListings = listings.filter(
-    (l) => l.status === (CropListingStatus.ACTIVE as unknown as string),
+    (l) => String(l.status).toLowerCase() === CropListingStatus.ACTIVE,
   );
 
   // 2. Calculate Total Expected Value
@@ -260,14 +248,14 @@ function CropsOnSaleOverview({ listings }: { listings: CropListingCT[] }) {
         {/* Top Section */}
         <div>
           <h3 className="text-gray-500 text-sm font-semibold mb-1">
-            Money Expected From Crops on Sale
+            {t.dash_moneyExpected}
           </h3>
           <div className="text-5xl font-bold text-[#1a4d2e] mb-2">
-            {(totalExpectedValue)}
+            {totalExpectedValue}
           </div>
           <p className="text-sm text-gray-500 flex items-center gap-2">
             <span className="font-bold text-[#1a4d2e]">
-              {activeListings.length} active crops
+              {activeListings.length} {t.dash_activecrops}
             </span>
           </p>
         </div>
@@ -276,10 +264,10 @@ function CropsOnSaleOverview({ listings }: { listings: CropListingCT[] }) {
         <div className="mt-8">
           <div className="flex justify-between items-end mb-2">
             <label className="text-xl font-bold text-[#1a4d2e]">
-              Market Movement
+              {t.dash_marketMovement}
             </label>
             <span className="text-xs text-gray-400">
-              Based on listing duration
+              {t.dash_basedOnDuration}
             </span>
           </div>
 
@@ -307,21 +295,21 @@ function CropsOnSaleOverview({ listings }: { listings: CropListingCT[] }) {
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-[#1a4d2e]"></div>
               <span className="text-gray-600">
-                Fresh: <b>{freshCount}</b>{" "}
+                {t.dash_fresh}: <b>{freshCount}</b>{" "}
                 <span className="text-xs text-gray-400">(0-7d)</span>
               </span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-[#4ade80]"></div>
               <span className="text-gray-600">
-                Waiting: <b>{waitingCount}</b>{" "}
+                {t.dash_waiting}: <b>{waitingCount}</b>{" "}
                 <span className="text-xs text-gray-400">(8-21d)</span>
               </span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-[#fbbf24]"></div>
               <span className="text-gray-600">
-                Stuck: <b>{stuckCount}</b>{" "}
+                {t.dash_stuck}: <b>{stuckCount}</b>{" "}
                 <span className="text-xs text-gray-400">(21d+)</span>
               </span>
             </div>
@@ -332,7 +320,7 @@ function CropsOnSaleOverview({ listings }: { listings: CropListingCT[] }) {
       {/* RIGHT: Quality Mix Donut */}
       <div className="w-full md:w-64 flex flex-col items-center justify-center border-t md:border-t-0 md:border-l border-gray-100 pt-6 md:pt-0 md:pl-6">
         <h4 className="text-xl font-bold text-gray-700 mb-4 self-start md:self-center">
-          Crop Quality Mix
+          {t.dash_qualityMix}
         </h4>
         <div className="w-40 h-40 relative">
           <ResponsiveContainer width="100%" height="100%">
@@ -391,10 +379,13 @@ function CropsOnSaleOverview({ listings }: { listings: CropListingCT[] }) {
 }
 
 export default function FarmerDashboard() {
+  const { t } = useFarmerLang();
   const [cropListings, setCropListings] = React.useState<CropListingCT[]>([]);
   const [transactions, setTransactions] = React.useState<Transaction[]>([]);
   const [schemes, setSchemes] = React.useState<Scheme[]>([]);
   const [loadingData, setLoadingData] = React.useState(true);
+  const [farmLat, setFarmLat] = React.useState(21.1702);
+  const [farmLng, setFarmLng] = React.useState(72.8311);
 
   const fetchData = async () => {
     try {
@@ -411,6 +402,21 @@ export default function FarmerDashboard() {
     } finally {
       setLoadingData(false);
     }
+    // Fetch farmer profile for real farm coordinates
+    try {
+      const profileResp = await getProfile();
+      const userId = profileResp?.data?.id;
+      if (userId) {
+        const farmerResp = await getFarmerProfileByUserId(userId);
+        const fp = farmerResp?.data;
+        if (fp?.location_latitude && fp?.location_longitude) {
+          setFarmLat(fp.location_latitude);
+          setFarmLng(fp.location_longitude);
+        }
+      }
+    } catch {
+      // keep defaults
+    }
   };
 
   React.useEffect(() => {
@@ -423,7 +429,7 @@ export default function FarmerDashboard() {
         <h1 className="text-2xl font-bold text-[#1a4d2e]">Dashboard</h1>
       </div> */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <WeatherWidget latitude={21.1702} longitude={72.8311} weather={mockWeather} />
+        <WeatherWidget latitude={farmLat} longitude={farmLng} />
 
         <div className="lg:col-span-2">
           <CropsOnSaleOverview listings={cropListings} />
@@ -435,20 +441,24 @@ export default function FarmerDashboard() {
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-[#1a4d2e] font-bold text-2xl">
-                  Net Earnings
+                  {t.dash_netEarnings}
                 </h3>
                 <div className="flex gap-4 mt-2">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-[#4ade80]"></div>
-                    <span className="text-sm text-black">Sales</span>
+                    <span className="text-sm text-black">{t.dash_sales}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-[#fbbf24]"></div>
-                    <span className="text-sm text-black">Deductions</span>
+                    <span className="text-sm text-black">
+                      {t.dash_deductions}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-[#166534]"></div>
-                    <span className="text-sm text-black">Net Profit</span>
+                    <span className="text-sm text-black">
+                      {t.dash_netProfit}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -549,7 +559,7 @@ export default function FarmerDashboard() {
             </div>
 
             <div className="mb-4 relative z-10">
-              <h3 className="text-2xl font-bold mb-1">Govt Schemes</h3>
+              <h3 className="text-2xl font-bold mb-1">{t.dash_govSchemes}</h3>
               <p className="text-green-200 text-sm">
                 Eligible benefits matching your profile
               </p>
@@ -579,7 +589,12 @@ export default function FarmerDashboard() {
                     <span className="text-xs text-green-200 font-medium">
                       Deadline: {scheme.deadline}
                     </span>
-                    <button className="bg-[#4ade80] text-[#1a4d2e] px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#4ade80]/90 transition-colors flex items-center gap-1 shadow-sm" onClick={() => window.location.href = `https://subhadra.odisha.gov.in/`}>
+                    <button
+                      className="bg-[#4ade80] text-[#1a4d2e] px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#4ade80]/90 transition-colors flex items-center gap-1 shadow-sm"
+                      onClick={() =>
+                        (window.location.href = `https://subhadra.odisha.gov.in/`)
+                      }
+                    >
                       View Details
                     </button>
                   </div>

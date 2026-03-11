@@ -7,6 +7,7 @@ import { CropListing, QualityGrade } from "@/types/crop.types";
 import { User } from "@/types/user.types";
 import { getAllCropListings } from "@/services/crop-listing/cropApi";
 import { getUserByRole } from "@/services/user/userApi";
+import { useFarmerLang } from "@/app/contexts/FarmerLanguageContext";
 import {
   Sprout,
   Scale,
@@ -123,6 +124,7 @@ const getGradeColor = (grade: QualityGrade) => {
 };
 
 export default function CropListingPage() {
+  const { t } = useFarmerLang();
   const [selectedCrop, setSelectedCrop] = useState<CropListing | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -220,38 +222,31 @@ export default function CropListingPage() {
 
     return (
       <div
-        className={`flex items-center gap-4 p-5 bg-gradient-to-r from-[#1a1a2e] to-[#16213e] rounded-xl border transition-all duration-300 ${
+        className={`flex items-center gap-3 px-3 py-2 bg-gradient-to-r from-[#1a1a2e] to-[#16213e] rounded-xl border transition-all duration-300 ${
           isSelected
             ? "border-[#4ade80] shadow-lg shadow-[#4ade80]/20"
             : "border-[#2a2a3e] hover:border-[#4ade80]"
         }`}
       >
-        <div className="w-16 h-16 bg-gradient-to-br from-[#4ade80] to-[#22c55e] rounded-lg flex items-center justify-center flex-shrink-0">
-          <Sprout className="w-8 h-8 text-[#0d2818]" />
+        <div className="w-8 h-8 bg-gradient-to-br from-[#4ade80] to-[#22c55e] rounded-lg flex items-center justify-center shrink-0">
+          <Sprout className="w-4 h-4 text-[#0d2818]" />
         </div>
-
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-bold text-white mb-1">
-            {crop.crop_name}
-          </h3>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-bold text-white truncate flex-1">
+              {crop.crop_name}
+            </h3>
             <span
-              className={`px-3 py-1 rounded-full text-xs font-semibold border ${getGradeColor(crop.quality_grade)}`}
+              className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold border shrink-0 ${getGradeColor(crop.quality_grade)}`}
             >
               {crop.quality_grade}
             </span>
-            <span className="text-gray-400 text-sm">•</span>
-            <span className="text-gray-300 text-sm font-medium">
-              {crop.quantity} kg
+            <span className="text-sm font-bold text-[#4ade80] shrink-0">
+              ₹{crop.expected_price}
+              <span className="text-[10px] text-gray-400 font-normal">/kg</span>
             </span>
           </div>
-        </div>
-
-        <div className="text-right flex-shrink-0">
-          <div className="text-2xl font-bold text-[#4ade80]">
-            ₹{crop.expected_price}
-          </div>
-          <div className="text-xs text-gray-400">per kg</div>
+          <p className="text-[11px] text-gray-400 mt-0.5">{crop.quantity} kg</p>
         </div>
       </div>
     );
@@ -262,17 +257,15 @@ export default function CropListingPage() {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-5xl font-bold mb-3 light-theme-font">
-            Crop Listing
+            {t.browse_title}
           </h1>
-          <p className="text-gray-400 text-lg">
-            Discover fresh produce from local farmers
-          </p>
+          <p className="text-gray-400 text-lg">{t.browse_subtitle}</p>
         </div>
 
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#4ade80] mx-auto"></div>
-            <p className="text-gray-400 mt-4">Loading crops...</p>
+            <p className="text-gray-400 mt-4">{t.browse_loading}</p>
           </div>
         ) : error ? (
           <div className="text-center py-12">
@@ -280,11 +273,7 @@ export default function CropListingPage() {
           </div>
         ) : (
           <div className="flex gap-8">
-            <div
-              className={`transition-all duration-500 ease-in-out ${
-                showDetails ? "w-[60%]" : "w-full"
-              }`}
-            >
+            <div className="w-full">
               <div className="bg-gradient-to-br from-[#dcfce7] to-[#bbf7d0] rounded-2xl p-6 shadow-lg border border-[#4ade80]/50">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold light-theme-font flex items-center gap-2">
@@ -302,7 +291,7 @@ export default function CropListingPage() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#639376]" />
                     <input
                       type="text"
-                      placeholder="Search crops..."
+                      placeholder={t.browse_searchPlaceholder}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full bg-white/40 backdrop-blur-md border border-[#2a2a3e] rounded-lg pl-10 pr-10 py-3 text-[#1a4d2e] placeholder-gray-500 focus:outline-none focus:border-[#4ade80] transition-colors"
@@ -325,7 +314,7 @@ export default function CropListingPage() {
                       }
                       className="bg-white/40 backdrop-blur-md border border-[#2a2a3e] rounded-lg px-4 py-3 text-[#1a4d2e] focus:outline-none focus:border-[#4ade80] transition-colors"
                     >
-                      <option value="ALL">All Grades</option>
+                      <option value="ALL">{t.browse_allGrades}</option>
                       <option value={QualityGrade.PREMIUM}>Premium</option>
                       <option value={QualityGrade.GRADE_A}>Grade A</option>
                       <option value={QualityGrade.GRADE_B}>Grade B</option>
@@ -386,7 +375,7 @@ export default function CropListingPage() {
                 ) : (
                   <div className="text-center py-12">
                     <Package className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-400">No crops found</p>
+                    <p className="text-gray-400">{t.browse_empty}</p>
                   </div>
                 )}
               </div>
@@ -395,13 +384,24 @@ export default function CropListingPage() {
             <AnimatePresence>
               {showDetails && selectedCrop && (
                 <motion.div
-                  initial={{ opacity: 0, x: 50, scale: 0.9 }}
-                  animate={{ opacity: 1, x: 0, scale: 1 }}
-                  exit={{ opacity: 0, x: 50, scale: 0.9 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                  className="w-[40%] flex-shrink-0"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                  onClick={() => {
+                    setShowDetails(false);
+                    setTimeout(() => setSelectedCrop(null), 300);
+                  }}
                 >
-                  <div className="bg-gradient-to-br from-[#1a4d2e] to-[#0d2818] rounded-2xl p-6 border border-[#4ade80]/30 sticky top-8">
+                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                  <motion.div
+                    initial={{ scale: 0.9, y: 20 }}
+                    animate={{ scale: 1, y: 0 }}
+                    exit={{ scale: 0.9, y: 20 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="relative bg-gradient-to-br from-[#1a4d2e] to-[#0d2818] rounded-2xl p-6 border border-[#4ade80]/30 w-full max-w-md"
+                  >
                     <div className="flex items-center justify-between mb-6">
                       <h2 className="text-2xl font-bold text-white">
                         Crop Details
@@ -483,7 +483,7 @@ export default function CropListingPage() {
                         Contact Farmer
                       </button>
                     </div>
-                  </div>
+                  </motion.div>
                 </motion.div>
               )}
             </AnimatePresence>

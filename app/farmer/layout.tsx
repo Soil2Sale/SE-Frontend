@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
+import LanguageSelector from "@/components/ui/LanguageSelector";
 import { getProfile } from "@/services/user/userApi";
 import { getFarmerProfileByUserId } from "@/services/farmer/farmerProfileApi";
 import { getNotificationsByUser } from "@/services/notification/notificationApi";
@@ -11,13 +12,34 @@ import { getRole } from "@/services/apiClient";
 import { getLocationNameCached } from "@/services/location/locationApi";
 import { Leaf, Sprout, Truck, AlertTriangle, Bell } from "lucide-react";
 import { NotificationType } from "@/types/dashboard.types";
+import {
+  FarmerLanguageProvider,
+  useFarmerLang,
+} from "@/app/contexts/FarmerLanguageContext";
+import { Language } from "@/app/constants/translations";
+
+const FARMER_LANGUAGES: { code: Language; label: string }[] = [
+  { code: "en", label: "English (EN)" },
+  { code: "hi", label: "Hindi (HI)" },
+  { code: "ta", label: "Tamil (TA)" },
+  { code: "ml", label: "Malayalam (ML)" },
+];
 
 export default function FarmerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  return (
+    <FarmerLanguageProvider>
+      <FarmerLayoutContent>{children}</FarmerLayoutContent>
+    </FarmerLanguageProvider>
+  );
+}
+
+function FarmerLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const { lang, setLang } = useFarmerLang();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -203,9 +225,17 @@ export default function FarmerLayout({
           title="Dashboard"
           userName={userProfile?.name || ""}
           userLocation={userLocation}
+          userRole={userProfile?.role || ""}
           notifications={navbarNotifications}
           onNotificationClick={() => setShowNotifications(!showNotifications)}
           showNotifications={showNotifications}
+          rightSlot={
+            <LanguageSelector
+              languages={FARMER_LANGUAGES}
+              currentLang={lang as Language}
+              onLanguageChange={(l) => setLang(l as "en" | "hi" | "ta" | "ml")}
+            />
+          }
           notificationIcon={
             <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
               <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-[#f8faf9]">

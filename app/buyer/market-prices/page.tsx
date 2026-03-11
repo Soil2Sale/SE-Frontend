@@ -1,17 +1,18 @@
 "use client";
 
 import React from "react";
-import { MapPin, Search, Filter, Tag, ShoppingCart } from "lucide-react";
+import { MapPin, Search, Filter, Tag, ShoppingCart, X } from "lucide-react";
 import AnimatedList from "@/components/ui/AnimatedList";
 import { getMarketPrices, MarketPrice } from "@/services/market/marketApi";
-
-
 
 export default function MarketPricesPage() {
   const [prices, setPrices] = React.useState<MarketPrice[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedState, setSelectedState] = React.useState("all");
+  const [selectedPrice, setSelectedPrice] = React.useState<MarketPrice | null>(
+    null,
+  );
 
   const fetchPrices = async () => {
     try {
@@ -49,8 +50,8 @@ export default function MarketPricesPage() {
     return matchesSearch && matchesState;
   });
 
-  const handleItemSelect = (item: string, index: number) => {
-    console.log("Selected price:", filteredPrices[index]);
+  const handleItemSelect = (_item: string, index: number) => {
+    setSelectedPrice(filteredPrices[index]);
   };
 
   return (
@@ -130,49 +131,37 @@ export default function MarketPricesPage() {
               renderItem={(_, index) => {
                 const price = filteredPrices[index];
                 return (
-                  <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 hover:border-[#1a4d2e] hover:shadow-md transition-all">
-                    {/* Crop name + price type badge */}
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-[#1a4d2e] mb-1">
-                          {price.crop_name}
-                        </h3>
-                        <div className="flex items-center gap-1 text-sm text-gray-500">
-                          <MapPin className="w-4 h-4" />
-                          <span>{price.market_location}, {price.state}</span>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        {/* Price Type badge */}
-                        <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">
-                          <Tag className="w-3 h-3" />
-                          {price.price_type}
+                  <div className="px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-100 hover:border-[#1a4d2e] hover:shadow-md transition-all cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-[#1a4d2e] truncate flex-1">
+                        {price.crop_name}
+                      </h3>
+                      <span className="text-sm font-bold text-[#1a4d2e] shrink-0">
+                        {price.price}
+                        <span className="text-[10px] text-gray-500 ml-0.5 font-normal">
+                          {price.price_type === "Wholesale" ? "/q" : "/kg"}
                         </span>
-                        {/* Market Type badge */}
-                        <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold">
-                          <ShoppingCart className="w-3 h-3" />
-                          {price.market_type}
+                      </span>
+                      <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-semibold shrink-0">
+                        <Tag className="w-2.5 h-2.5" />
+                        {price.price_type}
+                      </span>
+                      <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-semibold shrink-0">
+                        <ShoppingCart className="w-2.5 h-2.5" />
+                        {price.market_type}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mt-0.5">
+                      <div className="flex items-center gap-1 text-[11px] text-gray-500">
+                        <MapPin className="w-2.5 h-2.5 shrink-0" />
+                        <span className="truncate">
+                          {price.market_location}, {price.state}
                         </span>
                       </div>
-                    </div>
-
-                    {/* Price */}
-                    <div className="py-4 border-t border-gray-200">
-                      <p className="text-xs text-gray-500 mb-1">Price</p>
-                      <p className="text-3xl font-bold text-[#1a4d2e]">
-                        {(price.price)}
-                        {(price.price_type === "Wholesale") ? <span className="text-sm text-gray-500 ml-1 font-normal">/ quintal</span> : <span className="text-sm text-gray-500 ml-1 font-normal">/ kg</span>}
-                      </p>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                      <p className="text-xs text-gray-400">
-                        Recorded: {formatDate(price.recorded_date)}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        Added: {formatDate(price.created_at)}
-                      </p>
+                      <div className="flex items-center gap-3 text-[10px] text-gray-400 shrink-0 ml-2">
+                        <span>Rec: {formatDate(price.recorded_date)}</span>
+                        <span>Add: {formatDate(price.created_at)}</span>
+                      </div>
                     </div>
                   </div>
                 );
@@ -181,6 +170,76 @@ export default function MarketPricesPage() {
           </div>
         )}
       </div>
+      {/* Detail Popup */}
+      {selectedPrice && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedPrice(null)}
+        >
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div
+            className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-[#1a4d2e] px-6 py-5 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-white">
+                  {selectedPrice.crop_name}
+                </h2>
+                <div className="flex items-center gap-1 text-green-200 text-sm mt-0.5">
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>
+                    {selectedPrice.market_location}, {selectedPrice.state}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedPrice(null)}
+                className="text-white/70 hover:text-white p-1 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold">
+                  <Tag className="w-3.5 h-3.5" />
+                  {selectedPrice.price_type}
+                </span>
+                <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-sm font-semibold">
+                  <ShoppingCart className="w-3.5 h-3.5" />
+                  {selectedPrice.market_type}
+                </span>
+              </div>
+              <div className="bg-gray-50 rounded-2xl p-4">
+                <p className="text-xs text-gray-500 mb-1">Price</p>
+                <p className="text-3xl font-bold text-[#1a4d2e]">
+                  {selectedPrice.price}
+                  <span className="text-sm text-gray-500 ml-1 font-normal">
+                    {selectedPrice.price_type === "Wholesale"
+                      ? "/ quintal"
+                      : "/ kg"}
+                  </span>
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-50 rounded-xl p-3">
+                  <p className="text-xs text-gray-500 mb-0.5">Recorded Date</p>
+                  <p className="text-sm font-semibold text-gray-800">
+                    {formatDate(selectedPrice.recorded_date)}
+                  </p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-3">
+                  <p className="text-xs text-gray-500 mb-0.5">Added Date</p>
+                  <p className="text-sm font-semibold text-gray-800">
+                    {formatDate(selectedPrice.created_at)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -23,7 +23,9 @@ export interface FarmerAggregate {
   crops: Array<{ id: string; crop_name: string; seasonality: string }>;
   yield_history: Array<{
     id: string;
-    crop_name: string;
+    crop_id?: string; // UUID of the crop
+    _id?: string; // MongoDB ObjectId of the crop
+    crop_name?: string; // some backends return the name directly
     year: number;
     yield_quantity: number;
     consent_sharing: boolean;

@@ -30,6 +30,17 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { useFarmerLang } from "@/app/contexts/FarmerLanguageContext";
+import dynamic from "next/dynamic";
+
+const MapView = dynamic(() => import("@/components/ui/MapPicker"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-56 rounded-2xl bg-gray-100 flex items-center justify-center">
+      <p className="text-gray-400 text-sm">Loading map...</p>
+    </div>
+  ),
+});
 
 type SectionId =
   | "personal"
@@ -55,6 +66,8 @@ export default function FarmerProfilePage() {
     documents: useRef<HTMLDivElement>(null),
     settings: useRef<HTMLDivElement>(null),
   };
+
+  const { t } = useFarmerLang();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -94,7 +107,7 @@ export default function FarmerProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-500">
-        Loading profile data...
+        {t.profile_loading}
       </div>
     );
   }
@@ -165,20 +178,69 @@ export default function FarmerProfilePage() {
     );
   }
 
-  // Crop Timeline Data (Gantt) - fallback to empty if no crops
-  const cropsTimelineData: Record<
-    number,
-    Array<{ crop: string; season: string; months: number[] }>
-  > = {
-    2024: [],
-    2025: [],
-    2026: [],
-  };
-  // Optionally, you can map crops/yieldHistory to fill this if backend provides such info
+  // Season → active month numbers mapping
+  // Normalise key: lowercase + collapse spaces/underscores/hyphens to a single id
+  const normaliseSeason = (s: string) =>
+    s.toLowerCase().replace(/[\s_-]+/g, "");
 
-  // Master crop list (all crops ever grown)
-  const allCrops = crops.map((c) => c.crop_name);
-  const activeCrops = allCrops;
+  const seasonToMonths: Record<string, number[]> = {
+    kharif: [6, 7, 8, 9, 10],
+    rabi: [11, 12, 1, 2, 3],
+    yearround: [6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5],
+    zaid: [3, 4, 5, 6],
+  };
+
+  // Build a lookup indexed by BOTH uuid `id` and mongo `_id` so either format works
+  const cropById: Record<string, { crop_name: string; seasonality: string }> =
+    {};
+  crops.forEach((c: any) => {
+    const entry = { crop_name: c.crop_name, seasonality: c.seasonality || "" };
+    if (c.id) cropById[c.id] = entry;
+    if (c._id) cropById[c._id] = entry;
+  });
+
+  // Resolve a yield_history item to its crop info.
+  // Priority: crop_name on the item itself → crop_id lookup → _id lookup
+  const resolveCrop = (y: any): { crop_name: string; seasonality: string } => {
+    if (y.crop_name && cropById[y.crop_name]) return cropById[y.crop_name];
+    if (y.crop_name)
+      return {
+        crop_name: y.crop_name,
+        seasonality:
+          cropById[
+            Object.keys(cropById).find(
+              (k) => cropById[k].crop_name === y.crop_name,
+            ) || ""
+          ]?.seasonality || "",
+      };
+    if (y.crop_id && cropById[y.crop_id]) return cropById[y.crop_id];
+    if (y._id && cropById[y._id]) return cropById[y._id];
+    return { crop_name: "Unknown", seasonality: "" };
+  };
+
+  // Crops grown in the selected year
+  const cropsInSelectedYear = yieldHistory
+    .filter((y) => y.year === selectedYear)
+    .map((y) => {
+      const info = resolveCrop(y);
+      return {
+        crop_name: info.crop_name,
+        yield_quantity: y.yield_quantity,
+        seasonality: info.seasonality,
+      };
+    });
+
+  // Transform raw yield_history → pivot format for Recharts LineChart
+  const yieldHistoryPivot = (() => {
+    const byYear: Record<number, Record<string, number | string>> = {};
+    yieldHistory.forEach((y) => {
+      const { year, yield_quantity } = y;
+      if (!byYear[year]) byYear[year] = { year };
+      const cropName = resolveCrop(y).crop_name;
+      byYear[year][cropName] = yield_quantity;
+    });
+    return Object.values(byYear).sort((a: any, b: any) => a.year - b.year);
+  })();
 
   // Months (Jun-May agricultural year)
   const months = [
@@ -204,9 +266,7 @@ export default function FarmerProfilePage() {
     "Year-round": "#fbbf24",
   };
 
-  // Yield History Data (Grouped Bar Chart)
-  // If yieldHistory is empty, fallback to empty array
-  const yieldHistoryData = yieldHistory.length > 0 ? yieldHistory : [];
+  const yieldHistoryData = yieldHistoryPivot;
 
   // Scroll to section
   const scrollToSection = (sectionId: SectionId) => {
@@ -291,25 +351,29 @@ export default function FarmerProfilePage() {
                 {[
                   {
                     id: "personal" as SectionId,
-                    label: "Personal Info",
+                    label: t.profile_personal,
                     icon: User,
                   },
                   {
                     id: "farm" as SectionId,
-                    label: "Farm Details",
+                    label: t.profile_farm,
                     icon: MapPin,
                   },
                   {
                     id: "crops" as SectionId,
-                    label: "Crops & Yield",
+                    label: t.profile_crops,
                     icon: Sprout,
                   },
                   {
                     id: "financial" as SectionId,
-                    label: "Financial",
+                    label: t.profile_financial,
                     icon: Wallet,
                   },
-                  { id: "ratings" as SectionId, label: "Ratings", icon: Star },
+                  {
+                    id: "ratings" as SectionId,
+                    label: t.profile_ratings,
+                    icon: Star,
+                  },
                   // {
                   //   id: "documents" as SectionId,
                   //   label: "Documents",
@@ -317,7 +381,7 @@ export default function FarmerProfilePage() {
                   // },
                   {
                     id: "settings" as SectionId,
-                    label: "Settings",
+                    label: t.profile_settings,
                     icon: Settings,
                   },
                 ].map((item) => (
@@ -348,7 +412,7 @@ export default function FarmerProfilePage() {
             >
               <div className="mb-6">
                 <h3 className="text-xl font-semibold text-[#1a4d2e]">
-                  Personal Information
+                  {t.profile_personalInfo}
                 </h3>
                 <p className="text-sm text-gray-500">
                   Account and contact details
@@ -416,7 +480,7 @@ export default function FarmerProfilePage() {
             >
               <div className="mb-6">
                 <h3 className="text-xl font-semibold text-[#1a4d2e]">
-                  Farm Details
+                  {t.profile_farmDetails}
                 </h3>
                 <p className="text-sm text-gray-500">
                   Land and location information
@@ -485,16 +549,12 @@ export default function FarmerProfilePage() {
                   </p>
                 </div>
               </div>
-              <div className="mt-6 p-8 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 text-center">
-                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <MapPin className="w-6 h-6 text-gray-400" />
-                </div>
-                <p className="text-gray-500 font-medium">
-                  Map visualization will be displayed here
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Location: {farm.location_latitude}, {farm.location_longitude}
-                </p>
+              <div className="mt-6">
+                <MapView
+                  lat={farm.location_latitude || 21.1702}
+                  lng={farm.location_longitude || 72.8311}
+                  onChange={() => {}}
+                />
               </div>
             </div>
 
@@ -544,26 +604,43 @@ export default function FarmerProfilePage() {
                       ))}
                     </div>
                     {/* Crop Rows */}
-                    {allCrops.length === 0 ? (
-                      <div className="text-center text-gray-400 col-span-13 py-8">
-                        No crops data available.
+                    {cropsInSelectedYear.length === 0 ? (
+                      <div className="text-center text-gray-400 py-8">
+                        No crops recorded for {selectedYear}.
                       </div>
                     ) : (
-                      allCrops.map((cropName) => {
-                        // No timeline data, so just show crop name row
+                      cropsInSelectedYear.map((crop, i) => {
+                        const normKey = normaliseSeason(crop.seasonality);
+                        const activeMonths =
+                          seasonToMonths[normKey] || seasonToMonths["kharif"];
+                        // Map normalised key back to a display colour
+                        let color = "#1a4d2e";
+                        if (normKey === "rabi") color = "#4ade80";
+                        else if (normKey === "yearround") color = "#fbbf24";
+                        else if (normKey === "zaid") color = "#fb923c";
                         return (
                           <div
-                            key={cropName}
+                            key={`${crop.crop_name}-${i}`}
                             className="grid grid-cols-[150px_repeat(12,1fr)] gap-1 mb-2"
                           >
-                            <div className="font-semibold text-sm text-[#1a4d2e] p-2 bg-gray-50 rounded flex items-center">
-                              {cropName}
+                            <div className="font-semibold text-sm text-[#1a4d2e] p-2 bg-gray-50 rounded flex flex-col justify-center">
+                              <span>{crop.crop_name}</span>
+                              {crop.yield_quantity > 0 && (
+                                <span className="text-[10px] text-gray-400 font-normal">
+                                  {crop.yield_quantity} qtl
+                                </span>
+                              )}
                             </div>
-                            {monthNumbers.map((_, idx) => (
+                            {monthNumbers.map((month, idx) => (
                               <div
                                 key={idx}
-                                className="h-10 rounded flex items-center justify-center border border-gray-200"
-                              ></div>
+                                className="h-10 rounded"
+                                style={
+                                  activeMonths.includes(month)
+                                    ? { backgroundColor: color }
+                                    : { border: "1px solid #e5e7eb" }
+                                }
+                              />
                             ))}
                           </div>
                         );
@@ -594,7 +671,7 @@ export default function FarmerProfilePage() {
                   <div className="flex items-center gap-2">
                     <div
                       className="w-4 h-4 rounded"
-                      style={{ backgroundColor: seasonColors["Year-round"] }}
+                      style={{ backgroundColor: seasonColors["Year round"] }}
                     ></div>
                     <span className="text-sm text-gray-600">Year-round</span>
                   </div>
@@ -717,7 +794,7 @@ export default function FarmerProfilePage() {
                       <Wallet className="w-5 h-5 text-white/80" />
                     </div>
                     <p className="text-3xl font-bold text-white">
-                      {(wallet.balance)}
+                      {wallet.balance}
                     </p>
                   </div>
                   <div className="p-6 bg-linear-to-br from-[#1a4d2e] to-[#166534] rounded-xl shadow-lg">
@@ -728,7 +805,7 @@ export default function FarmerProfilePage() {
                       <TrendingUp className="w-5 h-5 text-white/80" />
                     </div>
                     <p className="text-3xl font-bold text-white">
-                      {(transactionSummary.total_sales)}
+                      {transactionSummary.total_sales}
                     </p>
                   </div>
                   <div className="p-6 bg-linear-to-br from-yellow-400 to-yellow-500 rounded-xl shadow-lg">
@@ -739,7 +816,7 @@ export default function FarmerProfilePage() {
                       <Award className="w-5 h-5 text-white/80" />
                     </div>
                     <p className="text-3xl font-bold text-white">
-                      {(transactionSummary.net_earnings)}
+                      {transactionSummary.net_earnings}
                     </p>
                   </div>
                 </div>

@@ -40,6 +40,11 @@ export const NAV_LINKS: Record<string, NavLink[]> = {
       icon: <Store className="w-5 h-5" />,
     },
     {
+      label: "Offers & Negotiations",
+      href: "/farmer/offers",
+      icon: <Handshake className="w-5 h-5" />,
+    },
+    {
       label: "Market Prices",
       href: "/farmer/market-prices",
       icon: <LineChart className="w-5 h-5" />,
@@ -58,6 +63,11 @@ export const NAV_LINKS: Record<string, NavLink[]> = {
       label: "Schemes",
       href: "/farmer/schemes",
       icon: <Landmark className="w-5 h-5" />,
+    },
+    {
+      label: "Shipment Requests",
+      href: "/farmer/shipment-requests",
+      icon: <Truck className="w-5 h-5" />,
     },
     {
       label: "Support",
@@ -86,6 +96,11 @@ export const NAV_LINKS: Record<string, NavLink[]> = {
       label: "Market Prices",
       href: "/buyer/market-prices",
       icon: <LineChart className="w-5 h-5" />,
+    },
+    {
+      label: "Shipment Requests",
+      href: "/buyer/shipment-requests",
+      icon: <Package className="w-5 h-5" />,
     },
     {
       label: "Support",
@@ -134,6 +149,11 @@ export const NAV_LINKS: Record<string, NavLink[]> = {
       icon: <Home className="w-5 h-5" />,
     },
     {
+      label: "Fleet Management",
+      href: "/logistics-provider/fleet-storage",
+      icon: <Truck className="w-5 h-5" />,
+    },
+    {
       label: "Shipments",
       href: "/logistics-provider/shipments",
       icon: <Package className="w-5 h-5" />,
@@ -142,11 +162,6 @@ export const NAV_LINKS: Record<string, NavLink[]> = {
       label: "Tracking",
       href: "/logistics-provider/tracking",
       icon: <Truck className="w-5 h-5" />,
-    },
-    {
-      label: "Fleet & Storage",
-      href: "/logistics-provider/fleet-storage",
-      icon: <Warehouse className="w-5 h-5" />,
     },
     {
       label: "Support",
@@ -203,11 +218,6 @@ export const NAV_LINKS: Record<string, NavLink[]> = {
       label: "Audit Logs",
       href: "/admin/audit-logs",
       icon: <Lock className="w-5 h-5" />,
-    },
-    {
-      label: "Support",
-      href: "/admin/support",
-      icon: <Settings className="w-5 h-5" />,
     },
   ],
 };

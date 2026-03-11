@@ -1,512 +1,1046 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import AnimatedList from "@/components/ui/AnimatedList";
 import StatusChip from "@/components/ui/StatusChip";
-import { Shipment, ShipmentStatus } from "@/types/shipment.types";
+import {
+  Shipment,
+  ShipmentStatus,
+  ShipmentRequest,
+  ShipmentRequestStatus,
+  ShipmentRequestNegLog,
+  Vehicle,
+} from "@/types/shipment.types";
+import { getProfile } from "@/services/user/userApi";
 import {
   getShipments,
   updateShipmentStatus,
   confirmDelivery,
+  getShipmentRequests,
+  respondToShipmentRequest,
+  getShipmentRequestNegotiations,
+  getVehicles,
 } from "@/services/shipment/shipmentApi";
+import apiClient from "@/services/apiClient";
+import {
+  getSocket,
+  buildConversationId,
+  joinChat,
+  sendChatMessage,
+  ChatMessage,
+} from "@/services/socket";
 import {
   Package,
   Truck,
-  MapPin,
-  DollarSign,
   Search,
-  Filter,
   X,
-  Calendar,
   CheckCircle,
+  XCircle,
+  MessageSquare,
+  Send,
+  ChevronRight,
+  Clock,
+  DollarSign,
+  Calendar,
+  Loader2,
+  Bell,
+  ChevronDown,
+  ChevronUp,
+  RefreshCcw,
 } from "lucide-react";
 
-type SortOption = "date_asc" | "date_desc" | "cost_asc" | "cost_desc" | "none";
+type TabType = "requests" | "active";
+
+function getOrderPartner(shipment: Shipment): { id: string; name: string } {
+  const order = shipment.order as any;
+  if (!order) return { id: "", name: "Order Party" };
+  const id = order.buyer_user_id || order.sender_user_id || "";
+  const name = order.buyer_name || order.sender_name || "Order Party";
+  return { id, name };
+}
+
+function getRequestFarmer(req: ShipmentRequest): { id: string; name: string } {
+  return {
+    id: req.farmer_user_id,
+    name: (req.order as any)?.farmer_name || "Farmer",
+  };
+}
 
 export default function ShipmentsPage() {
-  const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(
-    null,
+  const [tab, setTab] = useState<TabType>("requests");
+  const [currentUserId, setCurrentUserId] = useState("");
+  const [shipmentRequests, setShipmentRequests] = useState<ShipmentRequest[]>(
+    [],
   );
-  const [showDetails, setShowDetails] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<ShipmentStatus | "ALL">(
-    "ALL",
-  );
-  const [sortOption, setSortOption] = useState<SortOption>("date_desc");
-
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [updating, setUpdating] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [updating, setUpdating] = useState<string | null>(null);
 
+  const [negotiationLogs, setNegotiationLogs] = useState<
+    Record<string, ShipmentRequestNegLog[]>
+  >({});
+  const [expandedLogs, setExpandedLogs] = useState<Record<string, boolean>>({});
+  const [logsLoading, setLogsLoading] = useState<Record<string, boolean>>({});
+
+  const [counterTarget, setCounterTarget] = useState<ShipmentRequest | null>(
+    null,
+  );
+  const [counterCost, setCounterCost] = useState("");
+  const [counterDays, setCounterDays] = useState("");
+  const [counterMsg, setCounterMsg] = useState("");
+  const [counterSubmitting, setCounterSubmitting] = useState(false);
+
+  const [acceptTarget, setAcceptTarget] = useState<ShipmentRequest | null>(
+    null,
+  );
+  const [ownVehicles, setOwnVehicles] = useState<Vehicle[]>([]);
+  const [acceptVehicleId, setAcceptVehicleId] = useState("");
+  const [acceptSubmitting, setAcceptSubmitting] = useState(false);
+
+  const [chatShipment, setChatShipment] = useState<Shipment | null>(null);
+  const [chatRequest, setChatRequest] = useState<ShipmentRequest | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [msgInput, setMsgInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const [notifications, setNotifications] = useState<string[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // ─── Socket setup ───────────────────────────────────────────────────────────
   useEffect(() => {
-    fetchShipments();
+    const socket = getSocket();
+
+    socket.on("chat:message", (msg: ChatMessage) => {
+      setMessages((prev) => {
+        if (prev.find((m) => m.id === msg.id)) return prev;
+        return [...prev, msg];
+      });
+    });
+
+    socket.on("notification:new", (n: { message: string }) => {
+      setNotifications((prev) => [n.message, ...prev.slice(0, 4)]);
+    });
+
+    return () => {
+      socket.off("chat:message");
+      socket.off("notification:new");
+    };
   }, []);
 
-  const fetchShipments = async () => {
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // ─── Fetch current user + all shipments ────────────────────────────────────
+  useEffect(() => {
+    getProfile()
+      .then((res) => {
+        if (res?.data?.id) setCurrentUserId(res.data.id);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    getVehicles()
+      .then((res) => {
+        setOwnVehicles(res.data || []);
+      })
+      .catch(() => {});
+  }, []);
+
+  const fetchShipments = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await getShipments({ limit: 100 });
-      setShipments(response.data);
-    } catch (err) {
-      setError("Failed to load shipments. Please try again later.");
-      console.error("Error fetching shipments:", err);
+      const [reqRes, shipRes] = await Promise.all([
+        getShipmentRequests({ limit: 100 }),
+        getShipments({ limit: 100 }),
+      ]);
+      const allReqs: ShipmentRequest[] = reqRes.data || [];
+      const allShips: Shipment[] = shipRes.data || [];
+      setShipmentRequests(
+        allReqs.filter(
+          (r) =>
+            r.status === ShipmentRequestStatus.PENDING ||
+            r.status === ShipmentRequestStatus.NEGOTIATING,
+        ),
+      );
+      setShipments(
+        allShips.filter(
+          (s) =>
+            s.status !== ShipmentStatus.CREATED &&
+            s.status !== ShipmentStatus.CANCELLED,
+        ),
+      );
+    } catch {
+      setShipmentRequests([]);
+      setShipments([]);
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    fetchShipments();
+  }, [fetchShipments]);
+
+  // ─── Accept / Reject ────────────────────────────────────────────────────────
+  const openAccept = (req: ShipmentRequest) => {
+    setAcceptTarget(req);
+    setAcceptVehicleId(
+      req.vehicle_id ||
+        ownVehicles.find((v) => v.available)?.id ||
+        ownVehicles[0]?.id ||
+        "",
+    );
+    setAcceptSubmitting(false);
   };
 
-  const handleStatusUpdate = async (id: string, newStatus: ShipmentStatus) => {
+  const handleAcceptRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!acceptTarget) return;
+    setAcceptSubmitting(true);
+    setUpdating(acceptTarget.id + "_accept");
     try {
-      setUpdating(true);
-      await updateShipmentStatus(id, { status: newStatus });
-      await fetchShipments();
-      if (selectedShipment?.id === id) {
-        const updated = shipments.find((s) => s.id === id);
-        if (updated) setSelectedShipment(updated);
-      }
-    } catch (err) {
-      console.error("Error updating status:", err);
-      alert("Failed to update status");
+      await respondToShipmentRequest(acceptTarget.id, {
+        action: "accept",
+        proposed_cost: acceptTarget.proposed_cost,
+        proposed_duration_days: acceptTarget.proposed_duration_days,
+        vehicle_id: acceptVehicleId,
+      });
+      setShipmentRequests((prev) =>
+        prev.filter((r) => r.id !== acceptTarget.id),
+      );
+      setAcceptTarget(null);
     } finally {
-      setUpdating(false);
+      setAcceptSubmitting(false);
+      setUpdating(null);
+    }
+  };
+
+  const handleRejectRequest = async (id: string) => {
+    setUpdating(id + "_reject");
+    try {
+      await respondToShipmentRequest(id, { action: "reject" });
+      setShipmentRequests((prev) => prev.filter((r) => r.id !== id));
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const openCounter = (req: ShipmentRequest) => {
+    setCounterTarget(req);
+    setCounterCost(String(req.proposed_cost));
+    setCounterDays(String(req.proposed_duration_days));
+    setCounterMsg("");
+  };
+
+  const submitCounter = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!counterTarget) return;
+    setCounterSubmitting(true);
+    try {
+      await respondToShipmentRequest(counterTarget.id, {
+        action: "counter",
+        proposed_cost: Number(counterCost),
+        proposed_duration_days: Number(counterDays),
+        message: counterMsg,
+      });
+      setCounterTarget(null);
+      setNegotiationLogs((prev) => {
+        const next = { ...prev };
+        delete next[counterTarget.id];
+        return next;
+      });
+      setShipmentRequests((prev) =>
+        prev.map((r) =>
+          r.id === counterTarget.id
+            ? { ...r, status: ShipmentRequestStatus.NEGOTIATING }
+            : r,
+        ),
+      );
+    } finally {
+      setCounterSubmitting(false);
+    }
+  };
+
+  const toggleLog = async (reqId: string) => {
+    if (negotiationLogs[reqId] !== undefined) {
+      setExpandedLogs((prev) => ({ ...prev, [reqId]: !prev[reqId] }));
+      return;
+    }
+    setLogsLoading((prev) => ({ ...prev, [reqId]: true }));
+    setExpandedLogs((prev) => ({ ...prev, [reqId]: true }));
+    try {
+      const res = await getShipmentRequestNegotiations(reqId);
+      setNegotiationLogs((prev) => ({ ...prev, [reqId]: res.data || [] }));
+    } catch {
+      setNegotiationLogs((prev) => ({ ...prev, [reqId]: [] }));
+    } finally {
+      setLogsLoading((prev) => ({ ...prev, [reqId]: false }));
+    }
+  };
+
+  const handleStatusUpdate = async (id: string, status: ShipmentStatus) => {
+    setUpdating(id);
+    try {
+      await updateShipmentStatus(id, { status });
+      setShipments((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, status } : s)),
+      );
+    } finally {
+      setUpdating(null);
     }
   };
 
   const handleConfirmDelivery = async (id: string) => {
+    setUpdating(id + "_deliver");
     try {
-      setUpdating(true);
       await confirmDelivery(id);
-      await fetchShipments();
-      if (selectedShipment?.id === id) {
-        const updated = shipments.find((s) => s.id === id);
-        if (updated) setSelectedShipment(updated);
-      }
-    } catch (err) {
-      console.error("Error confirming delivery:", err);
-      alert("Failed to confirm delivery");
+      setShipments((prev) =>
+        prev.map((s) =>
+          s.id === id
+            ? {
+                ...s,
+                status: ShipmentStatus.DELIVERED,
+                delivered_at: new Date().toISOString(),
+              }
+            : s,
+        ),
+      );
     } finally {
-      setUpdating(false);
+      setUpdating(null);
     }
   };
 
-  const filteredAndSortedShipments = useMemo(() => {
-    let filtered = shipments.filter((shipment) => {
-      const matchesSearch =
-        shipment.tracking_code
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        shipment.id.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus =
-        filterStatus === "ALL" || shipment.status === filterStatus;
+  // ─── Chat handlers ──────────────────────────────────────────────────────────
+  const openChatForShipment = async (shipment: Shipment) => {
+    setChatRequest(null);
+    setChatShipment(shipment);
+    setMessages([]);
+    setChatLoading(true);
 
-      return matchesSearch && matchesStatus;
-    });
-
-    if (sortOption !== "none") {
-      filtered = [...filtered].sort((a, b) => {
-        switch (sortOption) {
-          case "date_asc":
-            return (
-              new Date(a.created_at).getTime() -
-              new Date(b.created_at).getTime()
-            );
-          case "date_desc":
-            return (
-              new Date(b.created_at).getTime() -
-              new Date(a.created_at).getTime()
-            );
-          case "cost_asc":
-            return a.estimated_cost - b.estimated_cost;
-          case "cost_desc":
-            return b.estimated_cost - a.estimated_cost;
-          default:
-            return 0;
-        }
-      });
+    const partner = getOrderPartner(shipment);
+    if (partner.id && currentUserId) {
+      const convId = buildConversationId(currentUserId, partner.id);
+      joinChat(convId);
     }
 
-    return filtered;
-  }, [shipments, searchTerm, filterStatus, sortOption]);
-
-  const handleShipmentSelect = (shipmentId: string) => {
-    const shipment = filteredAndSortedShipments.find(
-      (s) => s.id === shipmentId,
-    );
-    if (shipment) {
-      if (selectedShipment?.id === shipmentId) {
-        setShowDetails(false);
-        setTimeout(() => setSelectedShipment(null), 300);
-      } else {
-        setSelectedShipment(shipment);
-        setShowDetails(true);
+    try {
+      if (partner.id) {
+        const res = await apiClient.get(
+          `/chats/messages/${partner.id}?page=1&limit=50`,
+        );
+        const history: ChatMessage[] = res.data?.data || res.data || [];
+        setMessages(history);
       }
+    } catch {
+    } finally {
+      setChatLoading(false);
     }
   };
 
-  const shipmentItems = filteredAndSortedShipments.map(
-    (shipment) => shipment.id,
+  const openChatForRequest = async (req: ShipmentRequest) => {
+    setChatShipment(null);
+    setChatRequest(req);
+    setMessages([]);
+    setChatLoading(true);
+
+    const farmer = getRequestFarmer(req);
+    if (farmer.id && currentUserId) {
+      const convId = buildConversationId(currentUserId, farmer.id);
+      joinChat(convId);
+    }
+
+    try {
+      if (farmer.id) {
+        const res = await apiClient.get(
+          `/chats/messages/${farmer.id}?page=1&limit=50`,
+        );
+        const history: ChatMessage[] = res.data?.data || res.data || [];
+        setMessages(history);
+      }
+    } catch {
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const sendMessage = () => {
+    if (!msgInput.trim()) return;
+    let partnerId = "";
+    if (chatShipment) partnerId = getOrderPartner(chatShipment).id;
+    if (chatRequest) partnerId = getRequestFarmer(chatRequest).id;
+    if (!partnerId) return;
+    sendChatMessage(partnerId, msgInput.trim());
+    setMsgInput("");
+  };
+
+  const activeChatPartnerName = chatShipment
+    ? getOrderPartner(chatShipment).name
+    : chatRequest
+      ? getRequestFarmer(chatRequest).name
+      : "";
+
+  const activeChatSubtitle = chatShipment
+    ? chatShipment.tracking_code
+    : chatRequest
+      ? chatRequest.id
+      : "";
+
+  const filteredRequests = shipmentRequests.filter(
+    (r) =>
+      !searchTerm ||
+      r.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (r.order as any)?.crop_name
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase()),
+  );
+  const filteredShipments = shipments.filter(
+    (s) =>
+      !searchTerm ||
+      s.tracking_code.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const renderShipmentItem = (shipmentId: string) => {
-    const shipment = filteredAndSortedShipments.find(
-      (s) => s.id === shipmentId,
-    );
-    if (!shipment) return null;
-
-    const isSelected = selectedShipment?.id === shipmentId;
-
-    return (
-      <div
-        className={`flex items-center gap-4 p-5 bg-gradient-to-r from-[#1a1a2e] to-[#16213e] rounded-xl border transition-all duration-300 ${
-          isSelected
-            ? "border-[#4ade80] shadow-lg shadow-[#4ade80]/20"
-            : "border-[#2a2a3e] hover:border-[#4ade80]"
-        }`}
-      >
-        <div className="w-16 h-16 bg-gradient-to-br from-[#4ade80] to-[#22c55e] rounded-lg flex items-center justify-center flex-shrink-0">
-          <Truck className="w-8 h-8 text-[#0d2818]" />
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-bold text-white mb-1">
-            {shipment.tracking_code}
-          </h3>
-          <div className="flex items-center gap-2 flex-wrap">
-            <StatusChip status={shipment.status} />
-            <span className="text-gray-400 text-sm">•</span>
-            <span className="text-gray-300 text-sm font-medium">
-              {new Date(shipment.created_at).toLocaleDateString()}
-            </span>
-          </div>
-        </div>
-
-        <div className="text-right flex-shrink-0">
-          <div className="text-2xl font-bold text-[#4ade80]">
-            ₹{shipment.estimated_cost.toLocaleString()}
-          </div>
-          <div className="text-xs text-gray-400">estimated</div>
-        </div>
-      </div>
-    );
-  };
+  const isChatOpen = !!(chatShipment || chatRequest);
 
   return (
-    <div className="min-h-screen p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-5xl font-bold mb-3 light-theme-font">
-            Shipments
-          </h1>
-          <p className="text-gray-400 text-lg">
-            Manage and track all your shipments
+    <div className="space-y-4">
+      <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1a4d2e]">Shipments</h1>
+          <p className="text-gray-500 text-sm">
+            Manage requests and track your active shipments
           </p>
         </div>
-
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#4ade80] mx-auto"></div>
-            <p className="text-gray-400 mt-4">Loading shipments...</p>
-          </div>
-        ) : error ? (
-          <div className="text-center py-12">
-            <p className="text-red-400">{error}</p>
-          </div>
-        ) : (
-          <div className="flex gap-8">
-            <div
-              className={`transition-all duration-500 ease-in-out ${
-                showDetails ? "w-[60%]" : "w-full"
-              }`}
-            >
-              <div className="bg-gradient-to-br from-[#dcfce7] to-[#bbf7d0] rounded-2xl p-6 shadow-lg border border-[#4ade80]/50">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold light-theme-font flex items-center gap-2">
-                    <Package className="w-6 h-6 text-[#4ade80]" />
-                    All Shipments
-                  </h2>
-                  <div className="text-sm text-gray-400">
-                    {filteredAndSortedShipments.length}{" "}
-                    {filteredAndSortedShipments.length === 1
-                      ? "shipment"
-                      : "shipments"}
-                  </div>
-                </div>
-
-                <div className="space-y-4 mb-6">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#639376]" />
-                    <input
-                      type="text"
-                      placeholder="Search by tracking code or ID..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full bg-white/40 backdrop-blur-md border border-[#2a2a3e] rounded-lg pl-10 pr-10 py-3 text-[#1a4d2e] placeholder-gray-500 focus:outline-none focus:border-[#4ade80] transition-colors"
-                    />
-                    {searchTerm && (
-                      <button
-                        onClick={() => setSearchTerm("")}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <select
-                      value={filterStatus}
-                      onChange={(e) =>
-                        setFilterStatus(
-                          e.target.value as ShipmentStatus | "ALL",
-                        )
-                      }
-                      className="bg-white/40 backdrop-blur-md border border-[#2a2a3e] rounded-lg px-4 py-3 text-[#1a4d2e] focus:outline-none focus:border-[#4ade80] transition-colors"
-                    >
-                      <option value="ALL">All Status</option>
-                      <option value={ShipmentStatus.CREATED}>Created</option>
-                      <option value={ShipmentStatus.DISPATCHED}>
-                        Dispatched
-                      </option>
-                      <option value={ShipmentStatus.IN_TRANSIT}>
-                        In Transit
-                      </option>
-                      <option value={ShipmentStatus.DELIVERED}>
-                        Delivered
-                      </option>
-                      <option value={ShipmentStatus.CANCELLED}>
-                        Cancelled
-                      </option>
-                    </select>
-
-                    <select
-                      value={sortOption}
-                      onChange={(e) =>
-                        setSortOption(e.target.value as SortOption)
-                      }
-                      className="bg-white/40 backdrop-blur-md border border-[#2a2a3e] rounded-lg px-4 py-3 text-[#1a4d2e] focus:outline-none focus:border-[#4ade80] transition-colors"
-                    >
-                      <option value="date_desc">Date: Newest First</option>
-                      <option value="date_asc">Date: Oldest First</option>
-                      <option value="cost_asc">Cost: Low to High</option>
-                      <option value="cost_desc">Cost: High to Low</option>
-                    </select>
-                  </div>
-                </div>
-
-                {filteredAndSortedShipments.length > 0 ? (
-                  <AnimatedList
-                    items={shipmentItems}
-                    onItemSelect={handleShipmentSelect}
-                    showGradients={true}
-                    enableArrowNavigation={true}
-                    displayScrollbar={true}
-                    className="w-full"
-                    itemClassName="!p-0 !bg-transparent"
-                    renderItem={renderShipmentItem}
-                  />
-                ) : (
-                  <div className="text-center py-12">
-                    <Package className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-400">No shipments found</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <AnimatePresence>
-              {showDetails && selectedShipment && (
-                <motion.div
-                  initial={{ opacity: 0, x: 50, scale: 0.9 }}
-                  animate={{ opacity: 1, x: 0, scale: 1 }}
-                  exit={{ opacity: 0, x: 50, scale: 0.9 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                  className="w-[40%] flex-shrink-0"
-                >
-                  <div className="bg-gradient-to-br from-[#1a4d2e] to-[#0d2818] rounded-2xl p-6 border border-[#4ade80]/30 sticky top-8">
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-2xl font-bold text-white">
-                        Shipment Details
-                      </h2>
-                      <button
-                        onClick={() => {
-                          setShowDetails(false);
-                          setTimeout(() => setSelectedShipment(null), 300);
-                        }}
-                        className="text-gray-400 hover:text-white transition-colors"
-                      >
-                        <X className="w-6 h-6" />
-                      </button>
-                    </div>
-
-                    <div className="space-y-6">
-                      <div className="bg-[#0a0a0f]/50 rounded-xl p-4 backdrop-blur-sm">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-12 h-12 bg-gradient-to-br from-[#4ade80] to-[#22c55e] rounded-lg flex items-center justify-center">
-                            <Truck className="w-6 h-6 text-[#0d2818]" />
-                          </div>
-                          <h3 className="text-xl font-bold text-white">
-                            {selectedShipment.tracking_code}
-                          </h3>
-                        </div>
-
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-3 text-gray-300">
-                            <Package className="w-5 h-5 text-[#4ade80]" />
-                            <div>
-                              <div className="text-xs text-gray-400">
-                                Status
-                              </div>
-                              <StatusChip status={selectedShipment.status} />
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-3 text-gray-300">
-                            <Calendar className="w-5 h-5 text-[#4ade80]" />
-                            <div>
-                              <div className="text-xs text-gray-400">
-                                Created
-                              </div>
-                              <div className="font-semibold">
-                                {new Date(
-                                  selectedShipment.created_at,
-                                ).toLocaleString()}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-3 text-gray-300">
-                            <MapPin className="w-5 h-5 text-[#4ade80]" />
-                            <div>
-                              <div className="text-xs text-gray-400">Route</div>
-                              <div className="font-semibold text-sm">
-                                ({selectedShipment.origin_latitude.toFixed(4)},{" "}
-                                {selectedShipment.origin_longitude.toFixed(4)})
-                                <br />→ (
-                                {selectedShipment.destination_latitude.toFixed(
-                                  4,
-                                )}
-                                ,{" "}
-                                {selectedShipment.destination_longitude.toFixed(
-                                  4,
-                                )}
-                                )
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-3 text-gray-300">
-                            <DollarSign className="w-5 h-5 text-[#4ade80]" />
-                            <div>
-                              <div className="text-xs text-gray-400">Cost</div>
-                              <div className="font-semibold text-[#4ade80] text-xl">
-                                ₹
-                                {selectedShipment.estimated_cost.toLocaleString()}
-                                {selectedShipment.actual_cost && (
-                                  <span className="text-sm text-gray-400 ml-2">
-                                    (Actual: ₹
-                                    {selectedShipment.actual_cost.toLocaleString()}
-                                    )
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          {selectedShipment.dispatched_at && (
-                            <div className="flex items-center gap-3 text-gray-300">
-                              <Calendar className="w-5 h-5 text-[#4ade80]" />
-                              <div>
-                                <div className="text-xs text-gray-400">
-                                  Dispatched
-                                </div>
-                                <div className="font-semibold">
-                                  {new Date(
-                                    selectedShipment.dispatched_at,
-                                  ).toLocaleString()}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {selectedShipment.delivered_at && (
-                            <div className="flex items-center gap-3 text-gray-300">
-                              <CheckCircle className="w-5 h-5 text-[#4ade80]" />
-                              <div>
-                                <div className="text-xs text-gray-400">
-                                  Delivered
-                                </div>
-                                <div className="font-semibold">
-                                  {new Date(
-                                    selectedShipment.delivered_at,
-                                  ).toLocaleString()}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {selectedShipment.status !== ShipmentStatus.DELIVERED &&
-                        selectedShipment.status !==
-                          ShipmentStatus.CANCELLED && (
-                          <div className="space-y-3">
-                            <label className="text-sm font-semibold text-gray-300">
-                              Update Status
-                            </label>
-                            <select
-                              value={selectedShipment.status}
-                              onChange={(e) =>
-                                handleStatusUpdate(
-                                  selectedShipment.id,
-                                  e.target.value as ShipmentStatus,
-                                )
-                              }
-                              disabled={updating}
-                              className="w-full bg-[#0a0a0f]/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#4ade80] transition-colors disabled:opacity-50"
-                            >
-                              <option value={ShipmentStatus.CREATED}>
-                                Created
-                              </option>
-                              <option value={ShipmentStatus.DISPATCHED}>
-                                Dispatched
-                              </option>
-                              <option value={ShipmentStatus.IN_TRANSIT}>
-                                In Transit
-                              </option>
-                              <option value={ShipmentStatus.DELIVERED}>
-                                Delivered
-                              </option>
-                              <option value={ShipmentStatus.CANCELLED}>
-                                Cancelled
-                              </option>
-                            </select>
-
-                            {selectedShipment.status ===
-                              ShipmentStatus.IN_TRANSIT && (
-                              <button
-                                onClick={() =>
-                                  handleConfirmDelivery(selectedShipment.id)
-                                }
-                                disabled={updating}
-                                className="w-full bg-gradient-to-r from-[#4ade80] to-[#22c55e] text-[#0d2818] font-bold py-3 rounded-lg hover:shadow-lg hover:shadow-[#4ade80]/50 transition-all duration-300 disabled:opacity-50"
-                              >
-                                {updating
-                                  ? "Processing..."
-                                  : "Confirm Delivery"}
-                              </button>
-                            )}
-                          </div>
-                        )}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+        {notifications.length > 0 && (
+          <div className="flex items-center gap-2 bg-green-50 border border-green-200 px-3 py-1.5 rounded-xl text-xs text-[#1a4d2e] font-medium">
+            <Bell className="w-3.5 h-3.5" />
+            {notifications[0]}
           </div>
         )}
       </div>
+
+      <div className="flex gap-2">
+        {(["requests", "active"] as TabType[]).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              tab === t
+                ? "bg-[#1a4d2e] text-white shadow-sm"
+                : "bg-white text-gray-500 hover:bg-gray-50 border border-gray-200"
+            }`}
+          >
+            {t === "requests" ? (
+              <span className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" />
+                Pending Requests
+                {shipmentRequests.length > 0 && (
+                  <span className="bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
+                    {shipmentRequests.length}
+                  </span>
+                )}
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5">
+                <Truck className="w-3.5 h-3.5" />
+                My Shipments ({shipments.length})
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex gap-4">
+        <div
+          className={`transition-all duration-300 ${isChatOpen ? "w-[55%]" : "w-full"}`}
+        >
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder={
+                tab === "requests"
+                  ? "Search requests..."
+                  : "Search tracking code..."
+              }
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1a4d2e]"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-12 bg-white rounded-2xl">
+              <Loader2 className="w-6 h-6 animate-spin text-[#1a4d2e]" />
+            </div>
+          ) : tab === "requests" ? (
+            filteredRequests.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-2xl">
+                <Package className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                <p className="text-gray-400 text-sm">No pending requests</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {filteredRequests.map((req) => (
+                  <div
+                    key={req.id}
+                    className={`bg-white rounded-xl border transition-all ${
+                      chatRequest?.id === req.id
+                        ? "border-[#1a4d2e] shadow-md"
+                        : "border-gray-200 hover:border-[#1a4d2e] hover:shadow-sm"
+                    }`}
+                  >
+                    <div className="p-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
+                          <Truck className="w-4 h-4 text-[#1a4d2e]" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-semibold text-sm text-[#1a4d2e] truncate">
+                              {(req.order as any)?.crop_name ?? "Order"}
+                            </span>
+                            <StatusChip status={req.status} />
+                          </div>
+                          <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <DollarSign className="w-3 h-3" />₹
+                              {req.proposed_cost.toLocaleString()}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {req.proposed_duration_days} days
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {new Date(req.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-gray-100">
+                        <button
+                          onClick={() => toggleLog(req.id)}
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-gray-200 text-gray-600 text-xs font-semibold hover:bg-gray-100 transition-colors"
+                        >
+                          <MessageSquare className="w-3 h-3" />
+                          Negotiation Log
+                          {expandedLogs[req.id] ? (
+                            <ChevronUp className="w-3 h-3" />
+                          ) : (
+                            <ChevronDown className="w-3 h-3" />
+                          )}
+                        </button>
+                        <div className="flex-1" />
+                        <button
+                          onClick={() => handleRejectRequest(req.id)}
+                          disabled={!!updating}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50 disabled:opacity-50 transition-colors"
+                        >
+                          {updating === req.id + "_reject" ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <XCircle className="w-3 h-3" />
+                          )}
+                          Reject
+                        </button>
+                        <button
+                          onClick={() => openCounter(req)}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#1a4d2e] text-[#1a4d2e] text-xs font-semibold hover:bg-green-50 transition-colors"
+                        >
+                          <RefreshCcw className="w-3 h-3" />
+                          Counter
+                        </button>
+                        <button
+                          onClick={() => openAccept(req)}
+                          disabled={!!updating}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#1a4d2e] text-white text-xs font-semibold hover:bg-[#15401f] disabled:opacity-50 transition-colors"
+                        >
+                          {updating === req.id + "_accept" ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <CheckCircle className="w-3 h-3" />
+                          )}
+                          Accept
+                        </button>
+                        <button
+                          onClick={() => openChatForRequest(req)}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-gray-200 text-gray-600 text-xs font-semibold hover:bg-gray-50 transition-colors"
+                        >
+                          <MessageSquare className="w-3 h-3" />
+                          Chat
+                        </button>
+                      </div>
+                    </div>
+
+                    {expandedLogs[req.id] && (
+                      <div className="border-t border-gray-100 px-4 py-3">
+                        <h4 className="text-xs font-semibold text-gray-600 mb-2">
+                          Negotiation History
+                        </h4>
+                        {logsLoading[req.id] ? (
+                          <div className="flex items-center gap-2 text-xs text-gray-400 py-2">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />{" "}
+                            Loading...
+                          </div>
+                        ) : !negotiationLogs[req.id] ||
+                          negotiationLogs[req.id].length === 0 ? (
+                          <p className="text-xs text-gray-400 py-1">
+                            No negotiation activity yet.
+                          </p>
+                        ) : (
+                          <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+                            {negotiationLogs[req.id].map((log) => (
+                              <div
+                                key={log.id}
+                                className="flex gap-3 p-2.5 bg-gray-50 rounded-lg border border-gray-100"
+                              >
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between mb-0.5">
+                                    <span className="text-[11px] font-semibold text-gray-600 capitalize">
+                                      {log.proposed_by_role?.replace(
+                                        "_",
+                                        " ",
+                                      ) ?? "Party"}
+                                    </span>
+                                    <span className="text-[10px] text-gray-400">
+                                      {new Date(
+                                        log.created_at,
+                                      ).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs font-bold text-[#1a4d2e]">
+                                    ₹{log.proposed_cost.toLocaleString()} ·{" "}
+                                    {log.proposed_duration_days} days
+                                  </p>
+                                  {log.message && (
+                                    <p className="text-[11px] text-gray-500 mt-0.5">
+                                      {log.message}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )
+          ) : filteredShipments.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-2xl">
+              <Package className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+              <p className="text-gray-400 text-sm">No active shipments</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {filteredShipments.map((item) => (
+                <div
+                  key={item.id}
+                  className={`bg-white rounded-xl border transition-all cursor-pointer ${
+                    chatShipment?.id === item.id
+                      ? "border-[#1a4d2e] shadow-md"
+                      : "border-gray-200 hover:border-[#1a4d2e] hover:shadow-sm"
+                  }`}
+                >
+                  <div className="p-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
+                        <Truck className="w-4 h-4 text-[#1a4d2e]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-semibold text-sm text-[#1a4d2e] truncate">
+                            {item.tracking_code}
+                          </span>
+                          <StatusChip status={item.status} />
+                        </div>
+                        <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <DollarSign className="w-3 h-3" />₹
+                            {item.estimated_cost.toLocaleString()}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(item.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-100">
+                      {item.status !== ShipmentStatus.DELIVERED &&
+                        item.status !== ShipmentStatus.CANCELLED && (
+                          <select
+                            value={item.status}
+                            onChange={(e) =>
+                              handleStatusUpdate(
+                                item.id,
+                                e.target.value as ShipmentStatus,
+                              )
+                            }
+                            disabled={updating === item.id}
+                            className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-[#1a4d2e] disabled:opacity-50"
+                          >
+                            <option value={ShipmentStatus.DISPATCHED}>
+                              Dispatched
+                            </option>
+                            <option value={ShipmentStatus.IN_TRANSIT}>
+                              In Transit
+                            </option>
+                            <option value={ShipmentStatus.DELIVERED}>
+                              Delivered
+                            </option>
+                            <option value={ShipmentStatus.CANCELLED}>
+                              Cancelled
+                            </option>
+                          </select>
+                        )}
+                      {item.status === ShipmentStatus.IN_TRANSIT && (
+                        <button
+                          onClick={() => handleConfirmDelivery(item.id)}
+                          disabled={updating === item.id + "_deliver"}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#1a4d2e] text-white text-xs font-semibold hover:bg-[#15401f] disabled:opacity-50 transition-colors"
+                        >
+                          {updating === item.id + "_deliver" ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <CheckCircle className="w-3 h-3" />
+                          )}
+                          Confirm Delivery
+                        </button>
+                      )}
+                      <button
+                        onClick={() => openChatForShipment(item)}
+                        className="ml-auto flex items-center gap-1 px-2.5 py-1 rounded-lg border border-gray-200 text-gray-600 text-xs font-semibold hover:bg-gray-50 transition-colors"
+                      >
+                        <MessageSquare className="w-3 h-3" />
+                        Chat
+                        <ChevronRight className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <AnimatePresence>
+          {isChatOpen && (
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 40 }}
+              transition={{ duration: 0.25 }}
+              className="w-[45%] shrink-0"
+            >
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col h-[calc(100vh-220px)] sticky top-4">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                  <div>
+                    <p className="font-semibold text-sm text-[#1a4d2e]">
+                      {activeChatPartnerName}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {activeChatSubtitle}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setChatShipment(null);
+                      setChatRequest(null);
+                      setMessages([]);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+                  {chatLoading ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                    </div>
+                  ) : messages.length === 0 ? (
+                    <div className="text-center py-10">
+                      <MessageSquare className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                      <p className="text-xs text-gray-400">
+                        No messages yet. Start the conversation!
+                      </p>
+                    </div>
+                  ) : (
+                    messages.map((msg) => {
+                      const isMe = msg.sender_id === currentUserId;
+                      return (
+                        <div
+                          key={msg.id}
+                          className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+                        >
+                          <div
+                            className={`max-w-[75%] rounded-xl px-3 py-2 text-xs ${
+                              isMe
+                                ? "bg-[#1a4d2e] text-white rounded-br-sm"
+                                : "bg-gray-100 text-gray-800 rounded-bl-sm"
+                            }`}
+                          >
+                            <p>{msg.content}</p>
+                            <p
+                              className={`text-[10px] mt-0.5 ${isMe ? "text-green-200" : "text-gray-400"}`}
+                            >
+                              {new Date(msg.created_at).toLocaleTimeString(
+                                "en-IN",
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                <div className="px-3 py-3 border-t border-gray-100">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={msgInput}
+                      onChange={(e) => setMsgInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                      placeholder="Type a message..."
+                      className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#1a4d2e]"
+                    />
+                    <button
+                      onClick={sendMessage}
+                      disabled={!msgInput.trim()}
+                      className="p-2 bg-[#1a4d2e] text-white rounded-xl hover:bg-[#15401f] disabled:opacity-40 transition-colors"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {acceptTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setAcceptTarget(null)}
+          />
+          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="bg-[#1a4d2e] px-8 py-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-white">
+                  Accept Request
+                </h2>
+                <p className="text-green-200 text-sm mt-0.5">
+                  {(acceptTarget.order as any)?.crop_name ?? "Order"}
+                </p>
+              </div>
+              <button
+                onClick={() => setAcceptTarget(null)}
+                className="text-white/70 hover:text-white transition-colors rounded-full p-1"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="mx-8 mt-6 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+              <p className="text-xs text-gray-500 text-center mb-1">
+                Farmer's Proposal
+              </p>
+              <p className="font-bold text-[#1a4d2e] text-sm text-center">
+                ₹{acceptTarget.proposed_cost.toLocaleString()} ·{" "}
+                {acceptTarget.proposed_duration_days} days
+              </p>
+            </div>
+
+            <form
+              onSubmit={handleAcceptRequest}
+              className="px-8 py-6 space-y-5 text-black"
+            >
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Assign Vehicle
+                </label>
+                {ownVehicles.length === 0 ? (
+                  <p className="text-sm text-red-500">
+                    No vehicles found on your profile.
+                  </p>
+                ) : (
+                  <select
+                    required
+                    value={acceptVehicleId}
+                    onChange={(e) => setAcceptVehicleId(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1a4d2e] text-sm"
+                  >
+                    <option value="">Select a vehicle</option>
+                    {ownVehicles.map((v) => (
+                      <option key={v.id} value={v.id} disabled={!v.available}>
+                        {v.vehicle_type} — {v.capacity}kg capacity
+                        {v.available ? "" : " (unavailable)"}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setAcceptTarget(null)}
+                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={acceptSubmitting || !acceptVehicleId}
+                  className="flex-1 px-4 py-3 bg-[#1a4d2e] text-white rounded-xl font-semibold hover:bg-[#15401f] transition-colors disabled:opacity-60 text-sm flex items-center justify-center gap-2"
+                >
+                  {acceptSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Accepting...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" /> Confirm & Accept
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {counterTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setCounterTarget(null)}
+          />
+          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="bg-[#1a4d2e] px-8 py-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-white">
+                  Counter-Propose
+                </h2>
+                <p className="text-green-200 text-sm mt-0.5">
+                  {(counterTarget.order as any)?.crop_name ?? "Order"}
+                </p>
+              </div>
+              <button
+                onClick={() => setCounterTarget(null)}
+                className="text-white/70 hover:text-white transition-colors rounded-full p-1"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="mx-8 mt-6 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+              <p className="text-xs text-gray-500 mb-0.5 text-center">
+                Farmer's Proposal
+              </p>
+              <p className="font-bold text-[#1a4d2e] text-sm text-center">
+                ₹{counterTarget.proposed_cost.toLocaleString()} ·{" "}
+                {counterTarget.proposed_duration_days} days
+              </p>
+            </div>
+
+            <form
+              onSubmit={submitCounter}
+              className="px-8 py-6 space-y-5 text-black"
+            >
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Proposed Cost (₹)
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min={0}
+                    step="0.01"
+                    value={counterCost}
+                    onChange={(e) => setCounterCost(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1a4d2e] text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Duration (days)
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    value={counterDays}
+                    onChange={(e) => setCounterDays(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1a4d2e] text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Message (optional)
+                </label>
+                <textarea
+                  rows={3}
+                  value={counterMsg}
+                  onChange={(e) => setCounterMsg(e.target.value)}
+                  placeholder="Explain your counter-proposal..."
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1a4d2e] text-sm resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setCounterTarget(null)}
+                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={counterSubmitting}
+                  className="flex-1 px-4 py-3 bg-[#1a4d2e] text-white rounded-xl font-semibold hover:bg-[#15401f] transition-colors disabled:opacity-60 text-sm flex items-center justify-center gap-2"
+                >
+                  {counterSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Sending...
+                    </>
+                  ) : (
+                    "Send Counter"
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

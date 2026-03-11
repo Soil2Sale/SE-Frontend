@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import { getProfile } from "@/services/user/userApi";
 import { getNotificationsByUser } from "@/services/notification/notificationApi";
 import { getRole } from "@/services/apiClient";
+import { getLocationFromBrowser } from "@/services/location/locationApi";
 import { Leaf, Sprout, Truck, AlertTriangle, Bell } from "lucide-react";
 import { NotificationType } from "@/types/dashboard.types";
 
@@ -21,6 +22,7 @@ export default function BuyerLayout({
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [userLocation, setUserLocation] = useState<string>("");
 
   useEffect(() => {
     const accessToken = localStorage.getItem("accessToken");
@@ -53,6 +55,9 @@ export default function BuyerLayout({
       }));
       setNotifications(notifsResp?.data || []);
     } catch (e) {}
+    getLocationFromBrowser()
+      .then(setUserLocation)
+      .catch(() => {});
   };
 
   const navbarNotifications = notifications.map((n) => ({
@@ -141,7 +146,8 @@ export default function BuyerLayout({
         <Navbar
           title="Dashboard"
           userName={userProfile?.name || ""}
-          userLocation={userProfile?.email || ""}
+          userLocation={userLocation}
+          userRole={userProfile?.role || ""}
           notifications={navbarNotifications}
           onNotificationClick={() => setShowNotifications(!showNotifications)}
           showNotifications={showNotifications}

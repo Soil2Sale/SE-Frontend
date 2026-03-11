@@ -8,9 +8,11 @@ import {
   ChevronRight,
   Search,
   Bookmark,
+  X,
 } from "lucide-react";
 import AnimatedList from "@/components/ui/AnimatedList";
 import { getGuidanceArticles } from "@/services/guidance/guidanceApi";
+import { useFarmerLang } from "@/app/contexts/FarmerLanguageContext";
 
 interface GuidanceArticle {
   id: string;
@@ -26,11 +28,14 @@ interface GuidanceArticle {
 }
 
 export default function GuidancePage() {
+  const { t } = useFarmerLang();
   const [articles, setArticles] = React.useState<GuidanceArticle[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState("all");
   const [selectedType, setSelectedType] = React.useState<string>("all");
+  const [selectedArticle, setSelectedArticle] =
+    React.useState<GuidanceArticle | null>(null);
 
   const categories = [
     "all",
@@ -72,9 +77,8 @@ export default function GuidancePage() {
     return matchesSearch && matchesCategory && matchesType;
   });
 
-  const handleItemSelect = (item: string, index: number) => {
-    console.log("Selected article:", filteredArticles[index]);
-    // Navigate to detail view
+  const handleItemSelect = (_item: string, index: number) => {
+    setSelectedArticle(filteredArticles[index]);
   };
 
   const getTypeIcon = (type: string) => {
@@ -95,16 +99,14 @@ export default function GuidancePage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-[#1a4d2e] mb-2">
-              Farming Guidance
+              {t.guidance_title}
             </h1>
-            <p className="text-gray-600">
-              Expert advice and resources for better farming
-            </p>
+            <p className="text-gray-600">{t.guidance_subtitle}</p>
           </div>
           <div className="flex items-center gap-2">
             <button className="px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2">
               <Bookmark className="w-4 h-4" />
-              Bookmarks
+              {t.guidance_bookmark}
             </button>
           </div>
         </div>
@@ -116,7 +118,7 @@ export default function GuidancePage() {
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search for topics, tips, or techniques..."
+            placeholder={t.guidance_searchPlaceholder}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1a4d2e] focus:border-transparent"
@@ -135,7 +137,7 @@ export default function GuidancePage() {
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
-              {category === "all" ? "All Topics" : category}
+              {category === "all" ? t.guidance_all : category}
             </button>
           ))}
         </div>
@@ -161,7 +163,7 @@ export default function GuidancePage() {
             }`}
           >
             <Book className="w-4 h-4" />
-            Articles
+            {t.guidance_article}
           </button>
           <button
             onClick={() => setSelectedType("video")}
@@ -183,7 +185,7 @@ export default function GuidancePage() {
             }`}
           >
             <FileText className="w-4 h-4" />
-            Documents
+            {t.guidance_document}
           </button>
         </div>
       </div>
@@ -225,12 +227,12 @@ export default function GuidancePage() {
 
         {loading ? (
           <div className="text-center py-12 text-gray-500">
-            Loading guidance...
+            {t.guidance_loading}
           </div>
         ) : filteredArticles.length === 0 ? (
           <div className="text-center py-12">
             <Book className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">No guidance found</p>
+            <p className="text-gray-500">{t.guidance_empty}</p>
           </div>
         ) : (
           <div className="flex justify-center">
@@ -243,46 +245,25 @@ export default function GuidancePage() {
               renderItem={(_, index) => {
                 const article = filteredArticles[index];
                 return (
-                  <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 hover:border-[#1a4d2e] hover:shadow-md transition-all">
-                    <div className="flex gap-4">
-                      {/* Icon/Thumbnail */}
-                      <div className="flex-shrink-0">
-                        <div className="w-16 h-16 bg-[#1a4d2e] rounded-xl flex items-center justify-center text-white">
-                          {getTypeIcon(article.type)}
-                        </div>
+                  <div className="px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-100 hover:border-[#1a4d2e] hover:shadow-md transition-all cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <div className="shrink-0 text-[#1a4d2e]">
+                        {getTypeIcon(article.type)}
                       </div>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1">
-                            <h3 className="text-xl font-bold text-[#1a4d2e] mb-1">
-                              {article.title}
-                            </h3>
-                            <p className="text-sm text-gray-600 line-clamp-2">
-                              {article.description}
-                            </p>
-                          </div>
-                          <button className="ml-4 text-gray-400 hover:text-[#1a4d2e]">
-                            <Bookmark
-                              className={`w-5 h-5 ${article.bookmarked ? "fill-current text-[#1a4d2e]" : ""}`}
-                            />
-                          </button>
-                        </div>
-
-                        <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                          <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full font-medium">
-                            {article.category}
-                          </span>
-                          {article.duration && <span>{article.duration}</span>}
-                          <span>{article.views} views</span>
-                        </div>
-                      </div>
-
-                      {/* Arrow */}
-                      <div className="flex-shrink-0 flex items-center">
-                        <ChevronRight className="w-6 h-6 text-gray-400" />
-                      </div>
+                      <h3 className="text-sm font-semibold text-[#1a4d2e] truncate flex-1">
+                        {article.title}
+                      </h3>
+                      <span className="px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-semibold shrink-0">
+                        {article.category}
+                      </span>
+                      <Bookmark
+                        className={`w-3.5 h-3.5 shrink-0 ${article.bookmarked ? "fill-current text-[#1a4d2e]" : "text-gray-300"}`}
+                      />
+                    </div>
+                    <div className="flex items-center gap-3 mt-0.5 text-[11px] text-gray-400">
+                      {article.duration && <span>{article.duration}</span>}
+                      {article.duration && <span>•</span>}
+                      <span>{article.views} views</span>
                     </div>
                   </div>
                 );
@@ -291,6 +272,78 @@ export default function GuidancePage() {
           </div>
         )}
       </div>
+      {/* Article Detail Popup */}
+      {selectedArticle && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedArticle(null)}
+        >
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div
+            className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-[#1a4d2e] px-6 py-5 flex items-center justify-between">
+              <div className="flex items-center gap-3 flex-1 pr-4">
+                <div className="p-2 bg-white/20 rounded-lg text-white">
+                  {getTypeIcon(selectedArticle.type)}
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white leading-tight">
+                    {selectedArticle.title}
+                  </h2>
+                  <p className="text-green-200 text-xs mt-0.5 capitalize">
+                    {selectedArticle.type}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedArticle(null)}
+                className="text-white/70 hover:text-white p-1 rounded-full shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-semibold">
+                  {selectedArticle.category}
+                </span>
+                {selectedArticle.bookmarked && (
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1a4d2e]/10 text-[#1a4d2e] text-sm">
+                    <Bookmark className="w-3.5 h-3.5 fill-current" /> Bookmarked
+                  </span>
+                )}
+              </div>
+              <p className="text-gray-700 leading-relaxed text-sm">
+                {selectedArticle.description}
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {selectedArticle.duration && (
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-500 mb-0.5">Duration</p>
+                    <p className="text-sm font-semibold text-gray-800">
+                      {selectedArticle.duration}
+                    </p>
+                  </div>
+                )}
+                <div className="bg-gray-50 rounded-xl p-3">
+                  <p className="text-xs text-gray-500 mb-0.5">Views</p>
+                  <p className="text-sm font-semibold text-gray-800">
+                    {selectedArticle.views.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedArticle(null)}
+                className="w-full flex items-center justify-center gap-2 bg-[#1a4d2e] text-white py-3 rounded-xl font-semibold hover:bg-[#15401f] transition-colors"
+              >
+                Open Article <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

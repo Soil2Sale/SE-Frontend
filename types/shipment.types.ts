@@ -7,9 +7,11 @@ export enum ShipmentStatus {
 }
 
 export enum VehicleType {
+  AUTO_RICKSHAW = "AUTO_RICKSHAW",
+  PICKUP_VAN = "PICKUP_VAN",
+  MINI_TRUCK = "MINI_TRUCK",
   TRUCK = "TRUCK",
-  VAN = "VAN",
-  BIKE = "BIKE",
+  TRACTOR_TROLLEY = "TRACTOR_TROLLEY",
 }
 
 export enum NotificationType {
@@ -183,6 +185,8 @@ export interface CreateStorageFacilityResponse {
 
 export interface UpdateStorageFacilityRequest {
   name?: string;
+  location_latitude?: number;
+  location_longitude?: number;
   capacity?: number;
   availability?: boolean;
   pricing_per_unit?: number;
@@ -233,4 +237,128 @@ export interface MarkAllNotificationsReadResponse {
 export interface DeleteNotificationResponse {
   success: boolean;
   message: string;
+}
+
+export enum ShipmentRequestStatus {
+  PENDING = "PENDING",
+  NEGOTIATING = "NEGOTIATING",
+  AGREED = "AGREED",
+  BUYER_CONFIRMED = "BUYER_CONFIRMED",
+  REJECTED = "REJECTED",
+  CANCELLED = "CANCELLED",
+}
+
+export interface ShipmentRequestNegLog {
+  id: string;
+  shipment_request_id: string;
+  proposed_by: string;
+  proposed_by_role: string;
+  proposed_cost: number;
+  proposed_duration_days: number;
+  message?: string;
+  created_at: string;
+}
+
+export interface LogisticsProviderSummary {
+  id: string;
+  user_id: string;
+  company_name: string;
+  vehicles: Vehicle[];
+}
+
+export interface ShipmentRequest {
+  id: string;
+  order_id: string;
+  farmer_user_id: string;
+  buyer_user_id: string;
+  logistics_provider_id: string;
+  logistics_provider_user_id: string;
+  vehicle_id?: string;
+  origin_latitude: number;
+  origin_longitude: number;
+  destination_latitude: number;
+  destination_longitude: number;
+  proposed_cost: number;
+  proposed_duration_days: number;
+  agreed_cost?: number;
+  agreed_duration_days?: number;
+  status: ShipmentRequestStatus;
+  buyer_confirmed_at?: string;
+  created_at: string;
+  updated_at: string;
+  provider?: LogisticsProviderSummary;
+  order?: any;
+  negotiations?: ShipmentRequestNegLog[];
+}
+
+export interface CreateShipmentRequestBody {
+  order_id: string;
+  logistics_provider_id: string;
+  vehicle_id: string;
+  origin_latitude: number;
+  origin_longitude: number;
+  destination_latitude: number;
+  destination_longitude: number;
+  proposed_cost: number;
+  proposed_duration_days: number;
+}
+
+export interface RespondToShipmentRequestBody {
+  action: "accept" | "counter" | "reject";
+  proposed_cost?: number;
+  proposed_duration_days?: number;
+  vehicle_id?: string;
+  message?: string;
+}
+
+export interface CounterShipmentRequestBody {
+  proposed_cost: number;
+  proposed_duration_days: number;
+  message?: string;
+}
+
+export interface GetShipmentRequestsParams {
+  status?: ShipmentRequestStatus | string;
+  page?: number;
+  limit?: number;
+}
+
+export interface GetShipmentRequestsResponse {
+  success: boolean;
+  data: ShipmentRequest[];
+  count: number;
+}
+
+export interface GetShipmentRequestResponse {
+  success: boolean;
+  data: ShipmentRequest;
+}
+
+export interface GetShipmentRequestNegsResponse {
+  success: boolean;
+  data: ShipmentRequestNegLog[];
+}
+
+export interface GetAvailableProvidersResponse {
+  success: boolean;
+  data: LogisticsProviderSummary[];
+}
+
+export interface Order {
+  id: string;
+  offer_id: string;
+  farmer_user_id: string;
+  buyer_user_id: string;
+  crop_name?: string;
+  quantity?: number;
+  final_price?: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  offer?: any;
+}
+
+export interface GetOrdersResponse {
+  success: boolean;
+  data: Order[];
 }

@@ -71,6 +71,14 @@ export default function LoginPage() {
       setTimeout(() => {
         if (role.toLocaleLowerCase() === "buyer") {
           router.push("/buyer/marketplace");
+        }else if (role.toLocaleLowerCase() === "admin") {
+          router.push("/admin/dashboard");
+        }else if (role.toLocaleLowerCase() === "financial partner") {
+          router.push("/financial-partner/dashboard");
+        }else if (role.toLocaleLowerCase() === "cooperative") {
+          router.push("/cooperative/dashboard");
+        }else if (role.toLocaleLowerCase() === "logistics provider") {
+          router.push("/logistics-provider/fleet-storage");
         }else {
           router.push(
               `/${role.toLocaleLowerCase()}/dashboard` ||
