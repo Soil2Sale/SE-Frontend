@@ -1,8 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "motion/react";
 import AnimatedList from "@/components/ui/AnimatedList";
+
+const MapPicker = dynamic(() => import("@/components/ui/MapPicker"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[280px] rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center">
+      <p className="text-gray-400 text-sm">Loading map...</p>
+    </div>
+  ),
+});
 import StatusChip from "@/components/ui/StatusChip";
 import { Vehicle, StorageFacility, VehicleType } from "@/types/shipment.types";
 import {
@@ -30,6 +40,9 @@ export default function FleetStoragePage() {
   const [showFacilityModal, setShowFacilityModal] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [editingFacility, setEditingFacility] =
+    useState<StorageFacility | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [selectedFacility, setSelectedFacility] =
     useState<StorageFacility | null>(null);
 
   const [vehicleForm, setVehicleForm] = useState({
@@ -106,6 +119,13 @@ export default function FleetStoragePage() {
   };
 
   const handleCreateFacility = async () => {
+    if (
+      facilityForm.location_latitude === 0 &&
+      facilityForm.location_longitude === 0
+    ) {
+      alert("Please select a location on the map.");
+      return;
+    }
     try {
       await createStorageFacility(facilityForm);
       await fetchData();
@@ -119,6 +139,13 @@ export default function FleetStoragePage() {
 
   const handleUpdateFacility = async () => {
     if (!editingFacility) return;
+    if (
+      facilityForm.location_latitude === 0 &&
+      facilityForm.location_longitude === 0
+    ) {
+      alert("Please select a location on the map.");
+      return;
+    }
     try {
       await updateStorageFacility(editingFacility.id, facilityForm);
       await fetchData();
@@ -200,21 +227,21 @@ export default function FleetStoragePage() {
     if (!vehicle) return null;
 
     return (
-      <div className="flex items-center gap-4 p-5 bg-gradient-to-r from-[#1a1a2e] to-[#16213e] rounded-xl border border-[#2a2a3e] hover:border-[#4ade80] transition-all duration-300">
-        <div className="w-16 h-16 bg-gradient-to-br from-[#4ade80] to-[#22c55e] rounded-lg flex items-center justify-center flex-shrink-0">
-          <Truck className="w-8 h-8 text-[#0d2818]" />
+      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-[#1a1a2e] to-[#16213e] rounded-xl border border-[#2a2a3e] hover:border-[#4ade80] transition-all duration-300 cursor-pointer">
+        <div className="w-10 h-10 bg-gradient-to-br from-[#4ade80] to-[#22c55e] rounded-lg flex items-center justify-center flex-shrink-0">
+          <Truck className="w-4 h-4 text-[#0d2818]" />
         </div>
 
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-bold text-white mb-1">
+          <h3 className="text-sm font-semibold text-white mb-0.5">
             {vehicle.vehicle_type}
           </h3>
           <div className="flex items-center gap-2 flex-wrap">
             <StatusChip
               status={vehicle.available ? "Available" : "Unavailable"}
             />
-            <span className="text-gray-400 text-sm">•</span>
-            <span className="text-gray-300 text-sm font-medium">
+            <span className="text-gray-400 text-xs">•</span>
+            <span className="text-gray-300 text-xs font-medium">
               Capacity: {vehicle.capacity} kg
             </span>
           </div>
@@ -222,16 +249,22 @@ export default function FleetStoragePage() {
 
         <div className="flex gap-2">
           <button
-            onClick={() => openVehicleModal(vehicle)}
-            className="p-2 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              openVehicleModal(vehicle);
+            }}
+            className="p-1.5 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30 transition-colors"
           >
-            <Edit className="w-5 h-5" />
+            <Edit className="w-4 h-4" />
           </button>
           <button
-            onClick={() => handleDeleteVehicle(vehicle.id)}
-            className="p-2 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteVehicle(vehicle.id);
+            }}
+            className="p-1.5 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 transition-colors"
           >
-            <Trash2 className="w-5 h-5" />
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -243,47 +276,55 @@ export default function FleetStoragePage() {
     if (!facility) return null;
 
     return (
-      <div className="flex items-center gap-4 p-5 bg-gradient-to-r from-[#1a1a2e] to-[#16213e] rounded-xl border border-[#2a2a3e] hover:border-[#4ade80] transition-all duration-300">
-        <div className="w-16 h-16 bg-gradient-to-br from-[#4ade80] to-[#22c55e] rounded-lg flex items-center justify-center flex-shrink-0">
-          <Warehouse className="w-8 h-8 text-[#0d2818]" />
+      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-[#1a1a2e] to-[#16213e] rounded-xl border border-[#2a2a3e] hover:border-[#4ade80] transition-all duration-300 cursor-pointer">
+        <div className="w-10 h-10 bg-gradient-to-br from-[#4ade80] to-[#22c55e] rounded-lg flex items-center justify-center flex-shrink-0">
+          <Warehouse className="w-4 h-4 text-[#0d2818]" />
         </div>
 
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-bold text-white mb-1">{facility.name}</h3>
+          <h3 className="text-sm font-semibold text-white mb-0.5">
+            {facility.name}
+          </h3>
           <div className="flex items-center gap-2 flex-wrap">
             <StatusChip
               status={facility.availability ? "Available" : "Unavailable"}
             />
-            <span className="text-gray-400 text-sm">•</span>
-            <span className="text-gray-300 text-sm font-medium">
+            <span className="text-gray-400 text-xs">•</span>
+            <span className="text-gray-300 text-xs font-medium">
               {facility.capacity} units
             </span>
           </div>
-          <div className="text-gray-400 text-xs mt-1">
+          <div className="text-gray-400 text-[10px] mt-0.5">
             {facility.location_latitude.toFixed(4)},{" "}
             {facility.location_longitude.toFixed(4)}
           </div>
         </div>
 
-        <div className="text-right flex-shrink-0 mr-4">
-          <div className="text-xl font-bold text-[#4ade80]">
+        <div className="text-right flex-shrink-0 mr-3">
+          <div className="text-base font-bold text-[#4ade80]">
             ₹{facility.pricing_per_unit}
           </div>
-          <div className="text-xs text-gray-400">per unit</div>
+          <div className="text-[10px] text-gray-400">per unit</div>
         </div>
 
         <div className="flex gap-2">
           <button
-            onClick={() => openFacilityModal(facility)}
-            className="p-2 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              openFacilityModal(facility);
+            }}
+            className="p-1.5 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30 transition-colors"
           >
-            <Edit className="w-5 h-5" />
+            <Edit className="w-4 h-4" />
           </button>
           <button
-            onClick={() => handleDeleteFacility(facility.id)}
-            className="p-2 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteFacility(facility.id);
+            }}
+            className="p-1.5 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 transition-colors"
           >
-            <Trash2 className="w-5 h-5" />
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -369,7 +410,11 @@ export default function FleetStoragePage() {
                 vehicles.length > 0 ? (
                   <AnimatedList
                     items={vehicles.map((v) => v.id)}
-                    onItemSelect={() => {}}
+                    onItemSelect={(vehicleId) =>
+                      setSelectedVehicle(
+                        vehicles.find((v) => v.id === vehicleId) || null,
+                      )
+                    }
                     showGradients={true}
                     enableArrowNavigation={false}
                     displayScrollbar={true}
@@ -386,7 +431,11 @@ export default function FleetStoragePage() {
               ) : facilities.length > 0 ? (
                 <AnimatedList
                   items={facilities.map((f) => f.id)}
-                  onItemSelect={() => {}}
+                  onItemSelect={(facilityId) =>
+                    setSelectedFacility(
+                      facilities.find((f) => f.id === facilityId) || null,
+                    )
+                  }
                   showGradients={true}
                   enableArrowNavigation={false}
                   displayScrollbar={true}
@@ -404,6 +453,171 @@ export default function FleetStoragePage() {
           </>
         )}
       </div>
+
+      {/* Vehicle Detail Popup */}
+      {selectedVehicle && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedVehicle(null)}
+        >
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div
+            className="relative bg-gradient-to-br from-[#1a1a2e] to-[#16213e] rounded-2xl shadow-2xl w-full max-w-md border border-[#4ade80]/40 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-gradient-to-r from-[#1a4d2e] to-[#0d2818] px-6 py-5 flex items-center justify-between border-b border-[#4ade80]/20">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-[#4ade80]/20 rounded-lg">
+                  <Truck className="w-5 h-5 text-[#4ade80]" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">
+                    {selectedVehicle.vehicle_type}
+                  </h2>
+                  <p className="text-green-300 text-xs mt-0.5">
+                    Vehicle Details
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedVehicle(null)}
+                className="text-white/60 hover:text-white p-1 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <StatusChip
+                status={selectedVehicle.available ? "Available" : "Unavailable"}
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+                  <p className="text-xs text-gray-400 mb-0.5">Vehicle Type</p>
+                  <p className="text-sm font-semibold text-white">
+                    {selectedVehicle.vehicle_type}
+                  </p>
+                </div>
+                <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+                  <p className="text-xs text-gray-400 mb-0.5">Capacity</p>
+                  <p className="text-sm font-semibold text-[#4ade80]">
+                    {selectedVehicle.capacity} kg
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedVehicle(null);
+                    openVehicleModal(selectedVehicle);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 bg-blue-500/20 text-blue-300 border border-blue-500/30 py-2.5 rounded-xl font-semibold hover:bg-blue-500/30 transition-colors text-sm"
+                >
+                  <Edit className="w-4 h-4" /> Edit
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedVehicle(null);
+                    handleDeleteVehicle(selectedVehicle.id);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 bg-red-500/20 text-red-300 border border-red-500/30 py-2.5 rounded-xl font-semibold hover:bg-red-500/30 transition-colors text-sm"
+                >
+                  <Trash2 className="w-4 h-4" /> Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Facility Detail Popup */}
+      {selectedFacility && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedFacility(null)}
+        >
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div
+            className="relative bg-gradient-to-br from-[#1a1a2e] to-[#16213e] rounded-2xl shadow-2xl w-full max-w-md border border-[#4ade80]/40 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-gradient-to-r from-[#1a4d2e] to-[#0d2818] px-6 py-5 flex items-center justify-between border-b border-[#4ade80]/20">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-[#4ade80]/20 rounded-lg">
+                  <Warehouse className="w-5 h-5 text-[#4ade80]" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">
+                    {selectedFacility.name}
+                  </h2>
+                  <p className="text-green-300 text-xs mt-0.5">
+                    Storage Facility
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedFacility(null)}
+                className="text-white/60 hover:text-white p-1 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <StatusChip
+                status={
+                  selectedFacility.availability ? "Available" : "Unavailable"
+                }
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+                  <p className="text-xs text-gray-400 mb-0.5">Capacity</p>
+                  <p className="text-sm font-semibold text-white">
+                    {selectedFacility.capacity} units
+                  </p>
+                </div>
+                <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+                  <p className="text-xs text-gray-400 mb-0.5">Price / Unit</p>
+                  <p className="text-sm font-bold text-[#4ade80]">
+                    ₹{selectedFacility.pricing_per_unit}
+                  </p>
+                </div>
+                <div className="bg-white/5 rounded-xl p-3 border border-white/10 col-span-2">
+                  <p className="text-xs text-gray-400 mb-0.5">
+                    Location (Lat, Lng)
+                  </p>
+                  <p className="text-sm font-semibold text-white">
+                    {selectedFacility.location_latitude.toFixed(4)},{" "}
+                    {selectedFacility.location_longitude.toFixed(4)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedFacility(null);
+                    openFacilityModal(selectedFacility);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 bg-blue-500/20 text-blue-300 border border-blue-500/30 py-2.5 rounded-xl font-semibold hover:bg-blue-500/30 transition-colors text-sm"
+                >
+                  <Edit className="w-4 h-4" /> Edit
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedFacility(null);
+                    handleDeleteFacility(selectedFacility.id);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 bg-red-500/20 text-red-300 border border-red-500/30 py-2.5 rounded-xl font-semibold hover:bg-red-500/30 transition-colors text-sm"
+                >
+                  <Trash2 className="w-4 h-4" /> Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Vehicle Modal */}
       <AnimatePresence>
@@ -449,9 +663,15 @@ export default function FleetStoragePage() {
                     }
                     className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-[#4ade80]"
                   >
+                    <option value={VehicleType.AUTO_RICKSHAW}>
+                      Auto Rickshaw
+                    </option>
+                    <option value={VehicleType.PICKUP_VAN}>Pickup Van</option>
+                    <option value={VehicleType.MINI_TRUCK}>Mini Truck</option>
                     <option value={VehicleType.TRUCK}>Truck</option>
-                    <option value={VehicleType.VAN}>Van</option>
-                    <option value={VehicleType.BIKE}>Bike</option>
+                    <option value={VehicleType.TRACTOR_TROLLEY}>
+                      Tractor Trolley
+                    </option>
                   </select>
                 </div>
 
@@ -553,37 +773,21 @@ export default function FleetStoragePage() {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Latitude
+                    Location{" "}
+                    <span className="text-gray-400 font-normal">
+                      (click map or drag pin)
+                    </span>
                   </label>
-                  <input
-                    type="number"
-                    step="0.0001"
-                    value={facilityForm.location_latitude}
-                    onChange={(e) =>
+                  <MapPicker
+                    lat={facilityForm.location_latitude}
+                    lng={facilityForm.location_longitude}
+                    onChange={(lat, lng) =>
                       setFacilityForm({
                         ...facilityForm,
-                        location_latitude: parseFloat(e.target.value),
+                        location_latitude: lat,
+                        location_longitude: lng,
                       })
                     }
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-[#4ade80]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Longitude
-                  </label>
-                  <input
-                    type="number"
-                    step="0.0001"
-                    value={facilityForm.location_longitude}
-                    onChange={(e) =>
-                      setFacilityForm({
-                        ...facilityForm,
-                        location_longitude: parseFloat(e.target.value),
-                      })
-                    }
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-[#4ade80]"
                   />
                 </div>
 

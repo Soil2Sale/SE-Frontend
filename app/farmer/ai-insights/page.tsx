@@ -8,9 +8,11 @@ import {
   CheckCircle,
   Clock,
   Sparkles,
+  X,
 } from "lucide-react";
 import AnimatedList from "@/components/ui/AnimatedList";
 import { getAIInsights } from "@/services/ai/aiInsightsApi";
+import { useFarmerLang } from "@/app/contexts/FarmerLanguageContext";
 
 interface AIInsight {
   id: string;
@@ -30,9 +32,12 @@ interface AIInsight {
 }
 
 export default function AIInsightsPage() {
+  const { t } = useFarmerLang();
   const [insights, setInsights] = React.useState<AIInsight[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [selectedCategory, setSelectedCategory] = React.useState("all");
+  const [selectedInsight, setSelectedInsight] =
+    React.useState<AIInsight | null>(null);
 
   const categories = [
     { value: "all", label: "All Insights" },
@@ -65,8 +70,8 @@ export default function AIInsightsPage() {
     return selectedCategory === "all" || insight.category === selectedCategory;
   });
 
-  const handleItemSelect = (item: string, index: number) => {
-    console.log("Selected insight:", filteredInsights[index]);
+  const handleItemSelect = (_item: string, index: number) => {
+    setSelectedInsight(filteredInsights[index]);
   };
 
   const getPriorityColor = (priority: string) => {
@@ -115,10 +120,8 @@ export default function AIInsightsPage() {
             <Sparkles className="w-8 h-8" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold mb-1">AI-Powered Insights</h1>
-            <p className="text-green-100">
-              Smart recommendations to optimize your farming
-            </p>
+            <h1 className="text-3xl font-bold mb-1">{t.insights_title}</h1>
+            <p className="text-green-100">{t.insights_subtitle}</p>
           </div>
         </div>
       </div>
@@ -209,7 +212,7 @@ export default function AIInsightsPage() {
       <div className="bg-white rounded-3xl p-6 shadow-sm">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-[#1a4d2e]">
-            Your Personalized Insights
+            {t.insights_recommendations}
           </h2>
           <button className="text-[#1a4d2e] font-semibold hover:underline">
             View History
@@ -218,12 +221,12 @@ export default function AIInsightsPage() {
 
         {loading ? (
           <div className="text-center py-12 text-gray-500">
-            Analyzing your farm data...
+            {t.insights_loading}
           </div>
         ) : filteredInsights.length === 0 ? (
           <div className="text-center py-12">
             <Lightbulb className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">No insights available yet</p>
+            <p className="text-gray-500">{t.insights_empty}</p>
             <p className="text-sm text-gray-400 mt-2">
               Check back soon for AI-powered recommendations
             </p>
@@ -240,64 +243,38 @@ export default function AIInsightsPage() {
                 const insight = filteredInsights[index];
                 return (
                   <div
-                    className={`p-6 rounded-2xl border-2 hover:shadow-lg transition-all ${
+                    className={`px-3 py-1.5 rounded-lg border hover:shadow-md transition-all cursor-pointer ${
                       insight.action_required
-                        ? "bg-amber-50 border-amber-200"
+                        ? "bg-amber-50 border-amber-200 hover:border-amber-400"
                         : "bg-gray-50 border-gray-100 hover:border-[#1a4d2e]"
                     }`}
                   >
-                    <div className="flex gap-4">
-                      {/* Icon */}
-                      <div className="flex-shrink-0">
-                        <div className="w-12 h-12 bg-[#1a4d2e] rounded-xl flex items-center justify-center text-white">
-                          {getCategoryIcon(insight.category)}
-                        </div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-[#1a4d2e] truncate flex-1">
+                        {insight.title}
+                      </h3>
+                      <span
+                        className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${getPriorityColor(insight.priority)}`}
+                      >
+                        {insight.priority.toUpperCase()}
+                      </span>
+                      {insight.action_required && (
+                        <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-semibold shrink-0">
+                          Action
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between mt-0.5">
+                      <div className="flex items-center gap-2 text-[11px] text-gray-500">
+                        <span className="capitalize">
+                          {insight.category.replace("_", " ")}
+                        </span>
+                        <span>•</span>
+                        <span>{insight.confidence}% conf.</span>
                       </div>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="text-xl font-bold text-[#1a4d2e]">
-                            {insight.title}
-                          </h3>
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-bold border ${getPriorityColor(insight.priority)}`}
-                          >
-                            {insight.priority.toUpperCase()}
-                          </span>
-                        </div>
-
-                        <p className="text-gray-700 mb-3 leading-relaxed">
-                          {insight.description}
-                        </p>
-
-                        {insight.potential_impact && (
-                          <div className="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                            <p className="text-sm text-blue-900">
-                              <strong>Potential Impact:</strong>{" "}
-                              {insight.potential_impact}
-                            </p>
-                          </div>
-                        )}
-
-                        <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <span className="capitalize">
-                              {insight.category.replace("_", " ")}
-                            </span>
-                            <span>•</span>
-                            <span>{insight.confidence}% confidence</span>
-                            <span>•</span>
-                            <span>{formatDate(insight.created_at)}</span>
-                          </div>
-
-                          {insight.action_required && (
-                            <button className="bg-[#1a4d2e] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#15401f] transition-colors">
-                              Take Action
-                            </button>
-                          )}
-                        </div>
-                      </div>
+                      <span className="text-[10px] text-gray-400 shrink-0">
+                        {formatDate(insight.created_at)}
+                      </span>
                     </div>
                   </div>
                 );
@@ -306,6 +283,89 @@ export default function AIInsightsPage() {
           </div>
         )}
       </div>
+      {/* Insight Detail Popup */}
+      {selectedInsight && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedInsight(null)}
+        >
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div
+            className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-[#1a4d2e] px-6 py-5 flex items-center justify-between">
+              <div className="flex items-center gap-3 flex-1 pr-4">
+                <div className="p-2 bg-white/20 rounded-lg text-white">
+                  {getCategoryIcon(selectedInsight.category)}
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white leading-tight">
+                    {selectedInsight.title}
+                  </h2>
+                  <p className="text-green-200 text-xs capitalize mt-0.5">
+                    {selectedInsight.category.replace("_", " ")}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedInsight(null)}
+                className="text-white/70 hover:text-white p-1 rounded-full shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`px-3 py-1 rounded-full text-sm font-bold border ${getPriorityColor(selectedInsight.priority)}`}
+                >
+                  {selectedInsight.priority.toUpperCase()} PRIORITY
+                </span>
+                {selectedInsight.action_required && (
+                  <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-sm font-semibold">
+                    {t.insights_actionRequired}
+                  </span>
+                )}
+              </div>
+              <p className="text-gray-700 leading-relaxed text-sm">
+                {selectedInsight.description}
+              </p>
+              {selectedInsight.potential_impact && (
+                <div className="p-3 bg-blue-50 rounded-xl border border-blue-100">
+                  <p className="text-sm text-blue-900 font-medium">
+                    {t.insights_impact}
+                  </p>
+                  <p className="text-sm text-blue-700 mt-0.5">
+                    {selectedInsight.potential_impact}
+                  </p>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-50 rounded-xl p-3">
+                  <p className="text-xs text-gray-500 mb-0.5">
+                    {t.insights_confidence}
+                  </p>
+                  <p className="text-sm font-semibold text-gray-800">
+                    {selectedInsight.confidence}%
+                  </p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-3">
+                  <p className="text-xs text-gray-500 mb-0.5">Date</p>
+                  <p className="text-sm font-semibold text-gray-800">
+                    {formatDate(selectedInsight.created_at)}
+                  </p>
+                </div>
+              </div>
+              {selectedInsight.action_required && (
+                <button className="w-full bg-[#1a4d2e] text-white py-3 rounded-xl font-semibold hover:bg-[#15401f] transition-colors">
+                  Take Action
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

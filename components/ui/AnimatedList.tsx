@@ -35,7 +35,7 @@ const AnimatedItem: React.FC<AnimatedItemProps> = ({
       initial={{ scale: 0.7, opacity: 0 }}
       animate={inView ? { scale: 1, opacity: 1 } : { scale: 0.7, opacity: 0 }}
       transition={{ duration: 0.2, delay }}
-      className="mb-4 cursor-pointer"
+      className="mb-2 cursor-pointer"
     >
       {children}
     </motion.div>
@@ -165,16 +165,17 @@ const AnimatedList: React.FC<AnimatedListProps> = ({
   }, [selectedIndex, keyboardNav]);
 
   return (
-    <div className={`relative w-[500px] ${className}`}>
+    <div className={`relative w-full ${className}`}>
       <div
         ref={listRef}
-        className={`max-h-[400px] overflow-y-auto p-4 ${
+        className={`overflow-y-auto p-2 ${
           displayScrollbar
             ? "[&::-webkit-scrollbar]:w-[8px] [&::-webkit-scrollbar-track]:bg-[#060010] [&::-webkit-scrollbar-thumb]:bg-[#222] [&::-webkit-scrollbar-thumb]:rounded-[4px]"
             : "scrollbar-hide"
         }`}
         onScroll={handleScroll}
         style={{
+          height: "450px",
           scrollbarWidth: displayScrollbar ? "thin" : "none",
           scrollbarColor: "#222 #060010",
         }}

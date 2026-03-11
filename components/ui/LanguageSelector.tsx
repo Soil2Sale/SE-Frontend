@@ -7,6 +7,7 @@ import { Language } from "@/app/constants/translations";
 interface LanguageSelectorProps {
   currentLang: Language;
   onLanguageChange: (lang: Language) => void;
+  languages?: { code: Language; label: string }[];
 }
 
 const LANGUAGES: { code: Language; label: string }[] = [
@@ -27,7 +28,9 @@ const LANGUAGES: { code: Language; label: string }[] = [
 export default function LanguageSelector({
   currentLang,
   onLanguageChange,
+  languages,
 }: LanguageSelectorProps) {
+  const displayLanguages = languages ?? LANGUAGES;
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -68,7 +71,7 @@ export default function LanguageSelector({
       {isOpen && (
         <div className="absolute right-0 top-12 w-48 bg-white dark:bg-[#111] border border-[#1B5E20]/10 dark:border-[#333] rounded-xl shadow-xl overflow-hidden z-50 animate-fade-in animate-zoom-in duration-200">
           <div className="max-h-75 overflow-y-auto py-1">
-            {LANGUAGES.map((lang) => (
+            {displayLanguages.map((lang) => (
               <button
                 key={lang.code}
                 onClick={() => handleSelect(lang.code)}

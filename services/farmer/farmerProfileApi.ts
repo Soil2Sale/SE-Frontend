@@ -1,4 +1,7 @@
-import { FarmerAggregate, FarmerProfile } from "../../types/farmerProfile.types";
+import {
+  FarmerAggregate,
+  FarmerProfile,
+} from "../../types/farmerProfile.types";
 
 export const getFarmerAggregateByUserId = async (
   userId: string,
@@ -15,7 +18,9 @@ export const getFarmerProfileByUserId = async (userId: string) => {
   return response.data;
 };
 
-export const getAllFarmerProfiles = async (params?: Record<string, FarmerProfile>) => {
+export const getAllFarmerProfiles = async (
+  params?: Record<string, FarmerProfile>,
+) => {
   const response = await apiClient.get(`/farmer-profiles`, { params });
   return response.data;
 };

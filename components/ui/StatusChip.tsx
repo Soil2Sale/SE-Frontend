@@ -8,19 +8,19 @@ interface StatusChipProps {
 const getStatusStyle = (status: string) => {
   const statusLower = status.toLowerCase();
 
-  if (statusLower === "created" || statusLower === "pending") {
+  if (statusLower === "created" || statusLower === "pending" || statusLower === "inactive") {
     return "bg-gray-500/20 text-gray-300 border-gray-500/50";
   }
-  if (statusLower === "dispatched") {
+  if (statusLower === "dispatched" || statusLower === "in_progress" || statusLower === "in progress") {
     return "bg-blue-500/20 text-blue-300 border-blue-500/50";
   }
   if (statusLower === "in_transit" || statusLower === "in transit") {
     return "bg-yellow-500/20 text-yellow-300 border-yellow-500/50";
   }
-  if (statusLower === "delivered" || statusLower === "completed") {
+  if (statusLower === "delivered" || statusLower === "completed" || statusLower === "active" || statusLower === "resolved") {
     return "bg-green-500/20 text-green-300 border-green-500/50";
   }
-  if (statusLower === "cancelled" || statusLower === "failed") {
+  if (statusLower === "cancelled" || statusLower === "failed" || statusLower === "rejected") {
     return "bg-red-500/20 text-red-300 border-red-500/50";
   }
   if (statusLower === "premium") {

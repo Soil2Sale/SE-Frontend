@@ -28,6 +28,15 @@ import type {
   MarkNotificationReadResponse,
   MarkAllNotificationsReadResponse,
   DeleteNotificationResponse,
+  CreateShipmentRequestBody,
+  RespondToShipmentRequestBody,
+  CounterShipmentRequestBody,
+  GetShipmentRequestsParams,
+  GetShipmentRequestsResponse,
+  GetShipmentRequestResponse,
+  GetShipmentRequestNegsResponse,
+  GetAvailableProvidersResponse,
+  GetOrdersResponse,
 } from "../../types/shipment.types";
 
 // Shipment APIs
@@ -211,5 +220,102 @@ export const deleteNotification = async (
   const response = await apiClient.delete<DeleteNotificationResponse>(
     `/notifications/${id}`,
   );
+  return response.data;
+};
+
+export const getAvailableLogisticsProviders =
+  async (): Promise<GetAvailableProvidersResponse> => {
+    const response = await apiClient.get<GetAvailableProvidersResponse>(
+      "/logistics-providers/available",
+    );
+    return response.data;
+  };
+
+export const createShipmentRequest = async (
+  data: CreateShipmentRequestBody,
+): Promise<GetShipmentRequestResponse> => {
+  const response = await apiClient.post<GetShipmentRequestResponse>(
+    "/shipment-requests",
+    data,
+  );
+  return response.data;
+};
+
+export const getShipmentRequests = async (
+  params?: GetShipmentRequestsParams,
+): Promise<GetShipmentRequestsResponse> => {
+  const response = await apiClient.get<GetShipmentRequestsResponse>(
+    "/shipment-requests",
+    { params },
+  );
+  return response.data;
+};
+
+export const getShipmentRequestById = async (
+  id: string,
+): Promise<GetShipmentRequestResponse> => {
+  const response = await apiClient.get<GetShipmentRequestResponse>(
+    `/shipment-requests/${id}`,
+  );
+  return response.data;
+};
+
+export const respondToShipmentRequest = async (
+  id: string,
+  data: RespondToShipmentRequestBody,
+): Promise<GetShipmentRequestResponse> => {
+  const response = await apiClient.patch<GetShipmentRequestResponse>(
+    `/shipment-requests/${id}/respond`,
+    data,
+  );
+  return response.data;
+};
+
+export const counterShipmentRequest = async (
+  id: string,
+  data: CounterShipmentRequestBody,
+): Promise<GetShipmentRequestResponse> => {
+  const response = await apiClient.patch<GetShipmentRequestResponse>(
+    `/shipment-requests/${id}/counter`,
+    data,
+  );
+  return response.data;
+};
+
+export const getShipmentRequestNegotiations = async (
+  id: string,
+): Promise<GetShipmentRequestNegsResponse> => {
+  const response = await apiClient.get<GetShipmentRequestNegsResponse>(
+    `/shipment-requests/${id}/negotiations`,
+  );
+  return response.data;
+};
+
+export const buyerConfirmShipmentRequest = async (
+  id: string,
+): Promise<GetShipmentRequestResponse> => {
+  const response = await apiClient.patch<GetShipmentRequestResponse>(
+    `/shipment-requests/${id}/buyer-confirm`,
+  );
+  return response.data;
+};
+
+export const buyerRejectShipmentRequest = async (
+  id: string,
+): Promise<GetShipmentRequestResponse> => {
+  const response = await apiClient.patch<GetShipmentRequestResponse>(
+    `/shipment-requests/${id}/buyer-reject`,
+  );
+  return response.data;
+};
+
+export const getOrders = async (params?: {
+  role?: string;
+  page?: number;
+  limit?: number;
+}): Promise<GetOrdersResponse> => {
+  const response = await apiClient.get<GetOrdersResponse>("/orders", {
+    params,
+  });
   return response.data;
 };

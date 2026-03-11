@@ -24,6 +24,7 @@ import {
   MessageCircle,
   Shield,
 } from "lucide-react";
+import { useFarmerLang } from "@/app/contexts/FarmerLanguageContext";
 
 const FAQ_ITEMS = [
   {
@@ -54,6 +55,7 @@ const FAQ_ITEMS = [
 ];
 
 export default function SupportPage() {
+  const { t } = useFarmerLang();
   // Map legacy shipment notification types to new dashboard types
   const mapNotificationType = (type: string): NotificationType => {
     switch (type) {
@@ -173,7 +175,7 @@ export default function SupportPage() {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-5xl font-bold mb-3 light-theme-font">
-            Support Center
+            {t.support_title}
           </h1>
           <p className="text-gray-400 text-lg">
             Get help and stay updated with notifications
@@ -254,7 +256,7 @@ export default function SupportPage() {
             <div className="bg-white rounded-2xl p-6 shadow-lg">
               <h2 className="text-2xl font-bold text-[#1a4d2e] mb-4 flex items-center gap-2">
                 <HelpCircle className="w-6 h-6" />
-                Frequently Asked Questions
+                {t.support_faq}
               </h2>
 
               <div className="space-y-3">
@@ -306,7 +308,7 @@ export default function SupportPage() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold light-theme-font flex items-center gap-2">
                   <Bell className="w-6 h-6 text-[#4ade80]" />
-                  Notifications
+                  {t.support_notifications}
                   {unreadCount > 0 && (
                     <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                       {unreadCount}
@@ -323,7 +325,7 @@ export default function SupportPage() {
                   }
                   className="w-full bg-white/40 backdrop-blur-md border border-[#2a2a3e] rounded-lg px-4 py-2 text-[#1a4d2e] focus:outline-none focus:border-[#4ade80]"
                 >
-                  <option value="ALL">All Types</option>
+                  <option value="ALL">{t.support_allFilter}</option>
                   <option value={NotificationType.ORDER_UPDATE}>
                     Order Updates
                   </option>
@@ -358,7 +360,7 @@ export default function SupportPage() {
                     className="w-4 h-4 text-[#4ade80] border-gray-300 rounded focus:ring-[#4ade80]"
                   />
                   <span className="text-sm font-semibold text-[#1a4d2e]">
-                    Show unread only
+                    {t.support_unreadOnly}
                   </span>
                 </label>
 
@@ -367,7 +369,7 @@ export default function SupportPage() {
                     onClick={handleMarkAllAsRead}
                     className="w-full bg-white/40 backdrop-blur-md border border-[#2a2a3e] rounded-lg px-4 py-2 text-[#1a4d2e] font-semibold hover:bg-white/60 transition-colors text-sm"
                   >
-                    Mark All as Read
+                    {t.support_markAll}
                   </button>
                 )}
               </div>
@@ -430,9 +432,7 @@ export default function SupportPage() {
               ) : (
                 <div className="text-center py-12">
                   <Bell className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500 text-sm">
-                    No notifications found
-                  </p>
+                  <p className="text-gray-500 text-sm">{t.support_empty}</p>
                 </div>
               )}
             </div>
